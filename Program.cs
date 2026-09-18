@@ -24,6 +24,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 // ---- App services (business logic lives here, not in controllers) ----
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddRazorPages(); // required for Identity's built-in Login/Register pages
 
 // ---- MVC ----
 builder.Services.AddControllersWithViews();
@@ -60,3 +61,4 @@ app.MapControllerRoute(
 app.MapRazorPages(); // needed for Identity's built-in Login/Register pages
 
 app.Run();
+
