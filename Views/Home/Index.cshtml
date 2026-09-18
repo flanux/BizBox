@@ -1,0 +1,28 @@
+@model List<BusinessType>
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero">
+    <h1>Pick your business type. Get equipped.</h1>
+    <p>Bizbox gives you a curated equipment list for the business you want to start &mdash; no hunting, no hassle.</p>
+</section>
+
+<section class="business-type-grid">
+    @foreach (var bt in Model)
+    {
+        <a class="business-type-card" href="@Url.Action("Catalog", "BusinessType", new { id = bt.Id })">
+            <h3>@bt.Name</h3>
+            <p>@bt.ShortDescription</p>
+        </a>
+    }
+</section>
+
+<section class="how-it-works">
+    <h2>How it works</h2>
+    <ol>
+        <li>Pick your business type</li>
+        <li>Get your curated kit</li>
+        <li>Checkout with eSewa or Khalti</li>
+    </ol>
+</section>
