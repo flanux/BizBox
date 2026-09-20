@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1>Checkout</h1>
+<p>Order total: Rs. @ViewBag.Total</p>
+
+<form method="post" asp-action="PlaceOrder" asp-controller="Checkout">
+    <fieldset>
+        <legend>Choose payment method</legend>
+
+        <label>
+            <input type="radio" name="paymentMethod" value="Esewa" checked />
+            eSewa (sandbox)
+        </label><br />
+
+        <label>
+            <input type="radio" name="paymentMethod" value="Khalti" />
+            Khalti (sandbox)
+        </label><br />
+
+        <label>
+            <input type="radio" name="paymentMethod" value="InternationalCard_Simulated" />
+            International Card (simulated — demo flow only)
+        </label>
+    </fieldset>
+
+    <button type="submit">Pay Now</button>
+</form>

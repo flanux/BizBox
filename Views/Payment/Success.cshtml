@@ -1,0 +1,16 @@
+@model Bizbox.Models.Order
+@{
+    ViewData["Title"] = "Payment Successful";
+}
+<h1>Payment Successful</h1>
+@if (Model != null)
+{
+    <p>Order #@Model.Id — Rs. @Model.TotalAmount — Status: @Model.Status</p>
+    <ul>
+        @foreach (var item in Model.Items)
+        {
+            <li>@item.Product?.Name x @item.Quantity — Rs. @item.UnitPriceAtPurchase each</li>
+        }
+    </ul>
+}
+<a href="@Url.Action("Index", "Home")">Back to home</a>

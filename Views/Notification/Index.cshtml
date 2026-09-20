@@ -1,0 +1,24 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<h1>Upgrade Notifications</h1>
+
+@if (!Model.Any())
+{
+    <p>No upgrade notifications right now.</p>
+}
+else
+{
+    @foreach (var upgrade in Model)
+    {
+        <div class="product-card">
+            <p>A newer version of <strong>@upgrade.Supersedes?.Name</strong> is available:</p>
+            <h3>@upgrade.Name</h3>
+            <p>@upgrade.Description</p>
+            <p class="price">Rs. @upgrade.Price</p>
+            <a href="@Url.Action("Index", "Resale")">List your old one for trade-in &rarr;</a>
+        </div>
+    }
+}

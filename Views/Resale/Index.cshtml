@@ -1,0 +1,24 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Resale Marketplace";
+}
+
+<h1>Resale &amp; Trade-in Marketplace</h1>
+<a href="@Url.Action("Create")">List an item</a>
+
+<div class="product-grid">
+    @foreach (var item in Model)
+    {
+        <div class="product-card">
+            <h3>@item.Name</h3>
+            <p>@item.Description</p>
+            <p><em>Condition: @item.Condition</em> &middot; @item.BusinessType?.Name</p>
+            <p class="price">Rs. @item.Price</p>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <p>No resale listings yet.</p>
+}

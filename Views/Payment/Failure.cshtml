@@ -1,0 +1,10 @@
+@model Bizbox.Models.Order
+@{
+    ViewData["Title"] = "Payment Failed";
+}
+<h1>Payment Failed</h1>
+<p>Something went wrong processing your payment. Your order is still pending — you can try again.</p>
+@if (Model != null)
+{
+    <a href="@Url.Action("Index", "Checkout")">Try again</a>
+}

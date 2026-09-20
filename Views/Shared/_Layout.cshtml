@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Bizbox</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/">Bizbox</a>
+        <nav>
+            @await Html.PartialAsync("_LoginPartial")
+        </nav>
+    </header>
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <p>Bizbox &mdash; student e-commerce project.</p>
+    </footer>
+</body>
+</html>

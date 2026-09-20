@@ -1,0 +1,19 @@
+@model Bizbox.Services.EsewaFormData
+@{
+    ViewData["Title"] = "Redirecting to eSewa...";
+    Layout = null; // this page just auto-submits, no need for the site layout
+}
+<!DOCTYPE html>
+<html>
+<head><title>Redirecting to eSewa...</title></head>
+<body>
+    <p>Redirecting you to eSewa, please wait...</p>
+    <form id="esewaForm" method="POST" action="@Model.FormActionUrl">
+        @foreach (var field in Model.Fields)
+        {
+            <input type="hidden" name="@field.Key" value="@field.Value" />
+        }
+    </form>
+    <script>document.getElementById('esewaForm').submit();</script>
+</body>
+</html>

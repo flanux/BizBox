@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "List an Item";
+}
+<h1>List a Used Item for Resale</h1>
+
+<form method="post" asp-action="Create" asp-controller="Resale">
+    <label>Item name<br /><input type="text" name="name" required /></label><br />
+    <label>Description<br /><textarea name="description"></textarea></label><br />
+    <label>Price (Rs.)<br /><input type="number" name="price" step="0.01" required /></label><br />
+
+    <label>Business type<br />
+        <select name="businessTypeId">
+            @foreach (var bt in (List<BusinessType>)ViewBag.BusinessTypes)
+            {
+                <option value="@bt.Id">@bt.Name</option>
+            }
+        </select>
+    </label><br />
+
+    <label>Condition<br />
+        <select name="condition">
+            <option value="LikeNew">Like New</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+        </select>
+    </label><br /><br />
+
+    <button type="submit">List Item</button>
+</form>

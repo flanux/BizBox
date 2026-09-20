@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "International Payment (Simulated)";
+}
+<h1>International Card Payment</h1>
+<p><em>This is a simulated flow — no real card gateway is connected. See the project's scope notes.</em></p>
+
+<form method="post" asp-action="ConfirmInternationalSimulated" asp-controller="Payment">
+    <input type="hidden" name="orderId" value="@ViewBag.OrderId" />
+
+    <label>Card number<br /><input type="text" placeholder="4242 4242 4242 4242" maxlength="19" /></label><br />
+    <label>Expiry<br /><input type="text" placeholder="MM/YY" /></label><br />
+    <label>CVV<br /><input type="text" placeholder="123" maxlength="3" /></label><br /><br />
+
+    <button type="submit">Pay (Simulated)</button>
+</form>

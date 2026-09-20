@@ -1,0 +1,31 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Admin — Products";
+}
+
+<h1>Admin — Manage Products</h1>
+<a href="@Url.Action("Create")">Add new product</a>
+
+<table>
+    <thead>
+        <tr><th>Name</th><th>Business Type</th><th>Price</th><th>Active</th><th>Supersedes</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Name</td>
+                <td>@p.BusinessType?.Name</td>
+                <td>Rs. @p.Price</td>
+                <td>@(p.IsActive ? "Yes" : "No")</td>
+                <td>@(p.SupersedesProductId != null ? "Yes" : "-")</td>
+                <td>
+                    <form method="post" asp-action="ToggleActive" asp-controller="Admin">
+                        <input type="hidden" name="id" value="@p.Id" />
+                        <button type="submit">Toggle Active</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
