@@ -2,15 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Bizbox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="/">Bizbox</a>
-        <nav>
-            @await Html.PartialAsync("_LoginPartial")
-        </nav>
+        <div class="header-inner">
+            <a class="brand" href="/">Bizbox</a>
+            <nav class="primary-nav">
+                <a asp-controller="Home" asp-action="Index">Home</a>
+                <a asp-controller="Resale" asp-action="Index">Marketplace</a>
+                <a asp-controller="Home" asp-action="About">About</a>
+            </nav>
+            <ul class="nav-account">
+                @await Html.PartialAsync("_LoginPartial")
+            </ul>
+        </div>
     </header>
 
     <main class="container">
@@ -18,7 +29,13 @@
     </main>
 
     <footer class="site-footer">
-        <p>Bizbox &mdash; student e-commerce project.</p>
+        <div class="footer-inner">
+            <span>&copy; @DateTime.Now.Year Bizbox</span>
+            <span>
+                <a asp-controller="Home" asp-action="About">About</a> &middot;
+                <a asp-controller="Resale" asp-action="Index">Marketplace</a>
+            </span>
+        </div>
     </footer>
 </body>
 </html>

@@ -2,9 +2,9 @@
 @{
     ViewData["Title"] = "Payment Failed";
 }
-<h1>Payment Failed</h1>
-<p>Something went wrong processing your payment. Your order is still pending — you can try again.</p>
-@if (Model != null)
-{
-    <a href="@Url.Action("Index", "Checkout")">Try again</a>
-}
+<div class="page-header">
+    <span class="eyebrow">Payment issue</span>
+    <h1>Payment Failed</h1>
+    <p>Something went wrong processing your payment. Your order is still pending &mdash; you can try again.</p>
+</div>
+<a class="btn" asp-controller="Cart" asp-action="Index">Back to cart</a>

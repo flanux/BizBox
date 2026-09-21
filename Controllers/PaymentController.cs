@@ -57,8 +57,18 @@ public class PaymentController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> ConfirmInternationalSimulated(int orderId)
+    public async Task<IActionResult> ConfirmInternationalSimulated(int orderId, string cardNumber, string expiry, string cvv)
     {
+        var digitsOnly = new string((cardNumber ?? "").Where(char.IsDigit).ToArray());
+        var validExpiry = System.Text.RegularExpressions.Regex.IsMatch(expiry ?? "", @"^(0[1-9]|1[0-2])/\d{2}$");
+        var validCvv = System.Text.RegularExpressions.Regex.IsMatch(cvv ?? "", @"^\d{3}$");
+
+        if (digitsOnly.Length < 12 || digitsOnly.Length > 19 || !validExpiry || !validCvv)
+        {
+            TempData["Message"] = "Invalid card details.";
+            return RedirectToAction("InternationalSimulated", new { orderId });
+        }
+
         // No real card processing happens here — this exists purely to demonstrate
         // the UX flow for a payment path that isn't practically available to a
         // student project. See README / project context doc.

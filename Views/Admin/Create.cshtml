@@ -1,23 +1,26 @@
 @{
-    ViewData["Title"] = "Admin — Add Product";
+    ViewData["Title"] = "Add Product";
 }
-<h1>Add a Product</h1>
+<div class="page-header">
+    <span class="eyebrow">Admin</span>
+    <h1>Add a Product</h1>
+</div>
 
-<form method="post" asp-action="Create" asp-controller="Admin">
-    <label>Name<br /><input type="text" name="name" required /></label><br />
-    <label>Description<br /><textarea name="description"></textarea></label><br />
-    <label>Price (Rs.)<br /><input type="number" name="price" step="0.01" required /></label><br />
+<form method="post" asp-action="Create" asp-controller="Admin" style="max-width: 480px;">
+    <label>Name<input type="text" name="name" required /></label>
+    <label>Description<textarea name="description" rows="3"></textarea></label>
+    <label>Price (Rs.)<input type="number" name="price" step="0.01" required /></label>
 
-    <label>Business type<br />
+    <label>Business type
         <select name="businessTypeId">
             @foreach (var bt in (List<BusinessType>)ViewBag.BusinessTypes)
             {
                 <option value="@bt.Id">@bt.Name</option>
             }
         </select>
-    </label><br />
+    </label>
 
-    <label>Supersedes (optional — marks this as a newer model replacing an older one)<br />
+    <label>Supersedes (optional)
         <select name="supersedesProductId">
             <option value="">-- none --</option>
             @foreach (var p in (List<Product>)ViewBag.ExistingProducts)
@@ -25,7 +28,7 @@
                 <option value="@p.Id">@p.Name</option>
             }
         </select>
-    </label><br /><br />
+    </label>
 
-    <button type="submit">Add Product</button>
+    <button type="submit" class="btn btn-block">Add Product</button>
 </form>

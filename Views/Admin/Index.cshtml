@@ -1,10 +1,12 @@
 @model List<Product>
 @{
-    ViewData["Title"] = "Admin — Products";
+    ViewData["Title"] = "Admin";
 }
-
-<h1>Admin — Manage Products</h1>
-<a href="@Url.Action("Create")">Add new product</a>
+<div class="page-header">
+    <span class="eyebrow">Admin</span>
+    <h1>Manage Products</h1>
+    <a class="btn" href="@Url.Action("Create")">Add new product</a>
+</div>
 
 <table>
     <thead>
@@ -16,13 +18,13 @@
             <tr>
                 <td>@p.Name</td>
                 <td>@p.BusinessType?.Name</td>
-                <td>Rs. @p.Price</td>
-                <td>@(p.IsActive ? "Yes" : "No")</td>
-                <td>@(p.SupersedesProductId != null ? "Yes" : "-")</td>
+                <td>Rs. @p.Price.ToString("N0")</td>
+                <td><span class="badge @(p.IsActive ? "badge-new" : "badge-condition")">@(p.IsActive ? "Active" : "Inactive")</span></td>
+                <td>@(p.SupersedesProductId != null ? "Yes" : "\u2014")</td>
                 <td>
                     <form method="post" asp-action="ToggleActive" asp-controller="Admin">
                         <input type="hidden" name="id" value="@p.Id" />
-                        <button type="submit">Toggle Active</button>
+                        <button type="submit" class="btn-secondary btn">Toggle</button>
                     </form>
                 </td>
             </tr>

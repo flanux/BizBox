@@ -19,5 +19,7 @@ public class HomeController : Controller
         return View(businessTypes);
     }
 
+    public IActionResult About() => View();
+
     public IActionResult Error() => View();
 }

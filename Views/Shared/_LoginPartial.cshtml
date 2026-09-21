@@ -3,28 +3,24 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="nav-account">
 @if (SignInManager.IsSignedIn(User))
 {
     <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
-    <li><a asp-controller="Resale" asp-action="Index">Resale Market</a></li>
     <li><a asp-controller="Notification" asp-action="Index">Notifications</a></li>
     @if (User.IsInRole("Admin"))
     {
         <li><a asp-controller="Admin" asp-action="Index">Admin</a></li>
     }
+    <li><a asp-area="Identity" asp-page="/Account/Manage/Index">@UserManager.GetUserName(User)</a></li>
     <li>
-        <a asp-area="Identity" asp-page="/Account/Manage/Index">Hello @UserManager.GetUserName(User)!</a>
-    </li>
-    <li>
-        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post" style="display:inline">
             <button type="submit">Logout</button>
         </form>
     </li>
 }
 else
 {
+    <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
     <li><a asp-area="Identity" asp-page="/Account/Register">Register</a></li>
     <li><a asp-area="Identity" asp-page="/Account/Login">Login</a></li>
 }
-</ul>

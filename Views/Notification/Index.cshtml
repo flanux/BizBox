@@ -1,24 +1,37 @@
+@using Bizbox.Helpers
 @model List<Product>
 @{
     ViewData["Title"] = "Notifications";
 }
 
-<h1>Upgrade Notifications</h1>
+<div class="page-header">
+    <span class="eyebrow">Updates</span>
+    <h1>Upgrade Notifications</h1>
+</div>
 
 @if (!Model.Any())
 {
-    <p>No upgrade notifications right now.</p>
+    <div class="empty-state">
+        <span class="icon">🔔</span>
+        <p>No upgrade notifications right now.</p>
+    </div>
 }
 else
 {
-    @foreach (var upgrade in Model)
-    {
-        <div class="product-card">
-            <p>A newer version of <strong>@upgrade.Supersedes?.Name</strong> is available:</p>
-            <h3>@upgrade.Name</h3>
-            <p>@upgrade.Description</p>
-            <p class="price">Rs. @upgrade.Price</p>
-            <a href="@Url.Action("Index", "Resale")">List your old one for trade-in &rarr;</a>
-        </div>
-    }
+    <div class="grid">
+        @foreach (var upgrade in Model)
+        {
+            <div class="card">
+                <div class="icon-tile">@IconHelper.GetIcon(upgrade.Name)</div>
+                <div class="card-body">
+                    <span class="badge badge-upgrade">Upgrade Available</span>
+                    <p class="card-meta" style="margin-top:var(--space-2);">Replaces: @upgrade.Supersedes?.Name</p>
+                    <h3 class="card-title">@upgrade.Name</h3>
+                    <p class="card-desc">@upgrade.Description</p>
+                    <p class="card-price">Rs. @upgrade.Price.ToString("N0")</p>
+                    <a class="btn btn-block btn-secondary" asp-controller="Resale" asp-action="Index">List your old one</a>
+                </div>
+            </div>
+        }
+    </div>
 }

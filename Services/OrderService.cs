@@ -48,12 +48,10 @@ public class OrderService : IOrderService
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
 
-        // Clear the cart now that it's been converted into an order.
-        foreach (var ci in cartItems)
-        {
-            _db.CartItems.Remove(ci);
-        }
-        await _db.SaveChangesAsync();
+        // NOTE: cart is intentionally NOT cleared here. It's only cleared once
+        // payment is actually confirmed (see OrderService.MarkOrderPaidAsync
+        // and PaymentController) — so a cancelled/failed payment leaves the
+        // cart intact for the user to retry instead of losing their selection.
 
         return order;
     }
@@ -72,6 +70,7 @@ public class OrderService : IOrderService
         {
             order.Status = OrderStatus.Processing; // Pending -> Processing once payment confirmed
             await _db.SaveChangesAsync();
+            await _cartService.ClearCartAsync(order.UserId); // only clear cart on confirmed payment
         }
     }
 

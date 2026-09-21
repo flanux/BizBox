@@ -1,6 +1,7 @@
 using Bizbox.Data;
 using Bizbox.Models;
 using Bizbox.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,15 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(); // required for Identity's built-in Login/Register pages
 
 var app = builder.Build();
+
+// Codespaces (and most cloud hosts) sit behind a reverse proxy. Without this,
+// the app thinks it's on localhost:5000 and builds broken external URLs
+// (redirect links, eSewa/Khalti callback URLs, etc.) using that instead of
+// the real public address.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+});
 
 // ---- Seed the database on startup (business types + starter products + admin account) ----
 using (var scope = app.Services.CreateScope())

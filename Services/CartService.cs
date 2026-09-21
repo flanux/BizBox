@@ -12,6 +12,7 @@ public interface ICartService
     Task<List<CartItem>> GetCartAsync(string userId);
     Task RemoveFromCartAsync(string userId, int cartItemId);
     Task<decimal> GetCartTotalAsync(string userId);
+    Task ClearCartAsync(string userId);
 }
 
 public class CartService : ICartService
@@ -64,5 +65,12 @@ public class CartService : ICartService
     {
         var items = await GetCartAsync(userId);
         return items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity);
+    }
+
+    public async Task ClearCartAsync(string userId)
+    {
+        var items = await _db.CartItems.Where(c => c.UserId == userId).ToListAsync();
+        _db.CartItems.RemoveRange(items);
+        await _db.SaveChangesAsync();
     }
 }

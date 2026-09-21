@@ -1,29 +1,55 @@
+@using Bizbox.Helpers
 @model BusinessType
 @{
     ViewData["Title"] = Model.Name + " Catalog";
 }
 
-<h1>@Model.Name &mdash; Starter Kit</h1>
-<p>@Model.ShortDescription</p>
-
-<div class="product-grid">
-    @foreach (var product in Model.Products)
-    {
-        <div class="product-card">
-            <h3>@product.Name</h3>
-            <p>@product.Description</p>
-            <p class="price">Rs. @product.Price.ToString("N0")</p>
-
-            @if (product.SupersedesProductId != null)
-            {
-                <p class="upgrade-note">Newer model &mdash; replaces an earlier version</p>
-            }
-
-            <form method="post" asp-action="AddToCart" asp-controller="BusinessType">
-                <input type="hidden" name="productId" value="@product.Id" />
-                <input type="hidden" name="businessTypeId" value="@Model.Id" />
-                <button type="submit">Add to Cart</button>
-            </form>
-        </div>
-    }
+<div class="page-header">
+    <span class="eyebrow">Starter Kit</span>
+    <h1>@IconHelper.GetBusinessIcon(Model.Name) @Model.Name</h1>
+    <p>@Model.ShortDescription Browse everything below, add individual pieces, or grab the whole kit at once.</p>
 </div>
+
+@if (!Model.Products.Any())
+{
+    <div class="empty-state">
+        <span class="icon">@IconHelper.GetBusinessIcon(Model.Name)</span>
+        <p>No equipment listed for this business type yet.</p>
+    </div>
+}
+else
+{
+    <div class="grid">
+        @foreach (var product in Model.Products)
+        {
+            <div class="card">
+                <div class="icon-tile">@IconHelper.GetIcon(product.Name)</div>
+                <div class="card-body">
+                    @if (product.SupersedesProductId != null)
+                    {
+                        <span class="badge badge-upgrade">Newer Model</span>
+                    }
+                    <h3 class="card-title">@product.Name</h3>
+                    <p class="card-desc">@product.Description</p>
+                    <p class="card-price">Rs. @product.Price.ToString("N0")</p>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form method="post" asp-action="AddToCart" asp-controller="BusinessType">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <input type="hidden" name="businessTypeId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-block">Add to Cart</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a class="btn btn-block" asp-area="Identity" asp-page="/Account/Login"
+                           asp-route-returnUrl="@Url.Action("Catalog", "BusinessType", new { id = Model.Id })">
+                           Login to buy
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

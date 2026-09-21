@@ -1,3 +1,4 @@
+@using Bizbox.Helpers
 @model List<BusinessType>
 @{
     ViewData["Title"] = "Home";
@@ -5,13 +6,14 @@
 
 <section class="hero">
     <h1>Pick your business type. Get equipped.</h1>
-    <p>Bizbox gives you a curated equipment list for the business you want to start &mdash; no hunting, no hassle.</p>
+    <p class="subtitle">Bizbox gives you a curated equipment list for the business you want to start &mdash; no hunting across vendors, no guesswork on what you actually need.</p>
 </section>
 
-<section class="business-type-grid">
+<section class="grid grid-business">
     @foreach (var bt in Model)
     {
         <a class="business-type-card" href="@Url.Action("Catalog", "BusinessType", new { id = bt.Id })">
+            <span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span>
             <h3>@bt.Name</h3>
             <p>@bt.ShortDescription</p>
         </a>
@@ -20,9 +22,18 @@
 
 <section class="how-it-works">
     <h2>How it works</h2>
-    <ol>
-        <li>Pick your business type</li>
-        <li>Get your curated kit</li>
-        <li>Checkout with eSewa or Khalti</li>
+    <ol class="steps">
+        <li>
+            <h3>Choose your business</h3>
+            <p class="text-muted">Pick from Coffee Shop, Bakery, Restaurant, or Salon.</p>
+        </li>
+        <li>
+            <h3>Build your kit</h3>
+            <p class="text-muted">Add the equipment you need &mdash; individually or as a full kit.</p>
+        </li>
+        <li>
+            <h3>Buy and get started</h3>
+            <p class="text-muted">Checkout securely and you're ready to open.</p>
+        </li>
     </ol>
 </section>

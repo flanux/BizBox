@@ -1,15 +1,29 @@
 @{
-    ViewData["Title"] = "International Payment (Simulated)";
+    ViewData["Title"] = "International Payment";
 }
-<h1>International Card Payment</h1>
-<p><em>This is a simulated flow — no real card gateway is connected. See the project's scope notes.</em></p>
+<div class="page-header">
+    <span class="eyebrow">Payment</span>
+    <h1>International Card Payment</h1>
+    <p class="text-muted">Demonstration flow only &mdash; no real card gateway is connected.</p>
+</div>
 
-<form method="post" asp-action="ConfirmInternationalSimulated" asp-controller="Payment">
+@if (TempData["Message"] != null)
+{
+    <p class="error-message">@TempData["Message"]</p>
+}
+
+<form method="post" asp-action="ConfirmInternationalSimulated" asp-controller="Payment" style="max-width: 420px;">
     <input type="hidden" name="orderId" value="@ViewBag.OrderId" />
 
-    <label>Card number<br /><input type="text" placeholder="4242 4242 4242 4242" maxlength="19" /></label><br />
-    <label>Expiry<br /><input type="text" placeholder="MM/YY" /></label><br />
-    <label>CVV<br /><input type="text" placeholder="123" maxlength="3" /></label><br /><br />
+    <label>Card number
+        <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19" required pattern=".{12,19}" />
+    </label>
+    <label>Expiry
+        <input type="text" name="expiry" placeholder="MM/YY" required pattern="(0[1-9]|1[0-2])\/\d{2}" />
+    </label>
+    <label>CVV
+        <input type="text" name="cvv" placeholder="123" maxlength="3" required pattern="\d{3}" />
+    </label>
 
-    <button type="submit">Pay (Simulated)</button>
+    <button type="submit" class="btn btn-block">Pay (Simulated)</button>
 </form>
