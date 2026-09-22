@@ -18,6 +18,10 @@ if (-not (Test-Path "Migrations")) {
     dotnet ef migrations add InitialCreate
 }
 
+# After changing EF Core models, create a named migration explicitly, e.g.
+# dotnet ef migrations add AddManufacturerAndSpecs
+# dotnet ef database update
+
 Write-Host "Applying database migrations..."
 dotnet ef database update
 

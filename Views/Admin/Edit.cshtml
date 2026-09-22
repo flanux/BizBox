@@ -1,0 +1,14 @@
+@model Bizbox.ViewModels.AdminProductFormViewModel
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+<div class="admin-form-shell">
+    <div class="page-header">
+        <span class="eyebrow">Catalog / Edit</span>
+        <h1>Edit Product</h1>
+        <p>Change any catalog-facing property without touching the database manually.</p>
+    </div>
+
+    <partial name="_ProductForm" model="Model" />
+</div>

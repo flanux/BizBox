@@ -207,3 +207,73 @@ tr:last-child td { border-bottom: none; }
     td { border: none; padding: var(--space-2) var(--space-3); }
     tr { border-bottom: 1px solid var(--color-border); padding: var(--space-2) 0; }
 }
+
+/* ===== Super admin ===== */
+.admin-shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.admin-sidebar { position: sticky; top: 78px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); box-shadow: var(--shadow-sm); }
+.admin-sidebar-title { padding: var(--space-2) var(--space-3) var(--space-3); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-muted); }
+.admin-nav-link { display: block; padding: .6rem .7rem; border-radius: var(--radius-sm); color: var(--color-text); font-size: .84rem; font-weight: 600; }
+.admin-nav-link:hover, .admin-nav-link.active { background: #f0efe9; text-decoration: none; color: var(--color-ink); }
+.admin-main { min-width: 0; }
+.admin-page-header { margin-bottom: var(--space-4); }
+.admin-header-row { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); }
+.admin-header-row p { margin: 0; }
+.admin-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-5); }
+.admin-stat { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); box-shadow: var(--shadow-sm); }
+.admin-stat span, .admin-stat small { display: block; color: var(--color-text-muted); font-size: .72rem; }
+.admin-stat strong { display: block; margin: .2rem 0; color: var(--color-ink); font-size: 1.55rem; }
+.admin-section, .admin-form-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.admin-section { padding: var(--space-4); }
+.admin-section-header { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3); margin-bottom: var(--space-3); }
+.admin-section-header h2 { margin: 0; }
+.admin-alert { background: #e3f1e6; color: #1f6d3a; border: 1px solid #c9e3cf; border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-4); font-size: .84rem; font-weight: 600; }
+.admin-product-list { display: grid; gap: 1px; background: var(--color-border); border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; }
+.admin-product-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto auto auto; gap: var(--space-3); align-items: center; padding: var(--space-3); background: var(--color-surface); }
+.admin-product-info { min-width: 0; }
+.admin-product-info strong, .admin-product-info span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-product-info span { color: var(--color-text-muted); font-size: .75rem; margin-top: 2px; }
+.admin-product-price { font-weight: 800; white-space: nowrap; }
+.admin-product-thumb { width: 52px; height: 52px; border-radius: var(--radius-sm); overflow: hidden; background: #eeede7; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: .65rem; font-weight: 800; }
+.admin-product-thumb.small { width: 48px; height: 48px; }
+.admin-product-thumb img, .admin-current-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.admin-form-shell { max-width: 980px; margin: 0 auto; }
+.admin-form-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: var(--space-4); }
+.admin-form-card { padding: var(--space-5); margin-bottom: var(--space-4); }
+.admin-form-card-header { margin-bottom: var(--space-4); }
+.admin-form-card-header h2 { margin: 0; }
+.admin-form-card label { margin-bottom: var(--space-4); }
+.admin-form-card label:last-child { margin-bottom: 0; }
+.admin-form-card input[type=text], .admin-form-card input[type=number], .admin-form-card input[type=file], .admin-form-card textarea, .admin-form-card select { max-width: none; }
+.admin-checkbox { display: flex !important; align-items: center; gap: var(--space-2); }
+.admin-checkbox input { width: auto !important; margin: 0; }
+.admin-media-card { display: grid; grid-template-columns: 1fr 140px 1fr; gap: var(--space-5); align-items: center; }
+.admin-current-image { width: 140px; }
+.admin-current-image img { width: 140px; height: 100px; border-radius: var(--radius-sm); }
+.admin-current-image span { display: block; margin-top: 4px; color: var(--color-text-muted); font-size: .7rem; }
+.admin-form-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.admin-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.admin-table { margin: 0; min-width: 900px; box-shadow: none; }
+.admin-table-product { display: flex; align-items: center; gap: var(--space-3); min-width: 250px; }
+.admin-table-product strong, .admin-table-product small { display: block; }
+.admin-table-product small { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-muted); margin-top: 2px; }
+.admin-actions { display: flex; gap: var(--space-2); }
+.admin-actions form { margin: 0; }
+.field-error { display: block; color: var(--color-danger); font-size: .72rem; margin-top: 4px; }
+code { background: #eeede7; padding: .1rem .3rem; border-radius: 4px; font-size: .8em; }
+
+@media (max-width: 900px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .admin-sidebar { position: static; display: flex; gap: var(--space-1); overflow-x: auto; }
+    .admin-sidebar-title { display: none; }
+    .admin-nav-link { white-space: nowrap; }
+    .admin-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-form-grid { grid-template-columns: 1fr; }
+    .admin-media-card { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+    .admin-header-row { align-items: stretch; flex-direction: column; }
+    .admin-stat-grid { grid-template-columns: 1fr 1fr; }
+    .admin-product-row { grid-template-columns: 48px minmax(0, 1fr) auto; }
+    .admin-product-price, .admin-product-row > .pill { display: none; }
+}

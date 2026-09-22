@@ -1,37 +1,14 @@
+@model Bizbox.ViewModels.AdminProductFormViewModel
 @{
     ViewData["Title"] = "Add Product";
 }
-<div class="page-header">
-    <span class="eyebrow">Admin</span>
-    <h1>Add a Product</h1>
+
+<div class="admin-form-shell">
+    <div class="page-header">
+        <span class="eyebrow">Catalog / New</span>
+        <h1>Add Product</h1>
+        <p>Create a platform product. Images are uploaded directly and stored under <code>wwwroot/uploads/products</code>.</p>
+    </div>
+
+    <partial name="_ProductForm" model="Model" />
 </div>
-
-<form method="post" asp-action="Create" asp-controller="Admin" style="max-width: 520px;">
-    <label>Name<input type="text" name="name" required /></label>
-    <label>Manufacturer<input type="text" name="manufacturer" /></label>
-    <label>Description<textarea name="description" rows="3"></textarea></label>
-    <label>Specs <span class="text-muted">(short, separated by · )</span><input type="text" name="specs" /></label>
-    <label>Image path <span class="text-muted">(e.g. /images/espresso.jpg — upload the file into wwwroot/images/ first)</span><input type="text" name="imagePath" /></label>
-    <label>Price (Rs.)<input type="number" name="price" step="0.01" required /></label>
-
-    <label>Business type
-        <select name="businessTypeId">
-            @foreach (var bt in (List<BusinessType>)ViewBag.BusinessTypes)
-            {
-                <option value="@bt.Id">@bt.Name</option>
-            }
-        </select>
-    </label>
-
-    <label>Supersedes (optional)
-        <select name="supersedesProductId">
-            <option value="">-- none --</option>
-            @foreach (var p in (List<Product>)ViewBag.ExistingProducts)
-            {
-                <option value="@p.Id">@p.Name</option>
-            }
-        </select>
-    </label>
-
-    <button type="submit" class="btn btn-block">Add Product</button>
-</form>

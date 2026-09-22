@@ -29,6 +29,19 @@ way eSewa does.
 The database is seeded automatically on first run with business types,
 starter catalog items, and a demo admin account (see project notes).
 
+If the repository has no `Migrations/` directory yet, the setup scripts create
+the initial EF Core migration with `dotnet ef migrations add InitialCreate`.
+After model changes, create a new migration explicitly, for example:
+
+```bash
+dotnet ef migrations add AddManufacturerAndSpecs
+dotnet ef database update
+```
+
+Do not create `AddManufacturerAndSpecs` if those fields are already part of an
+existing migration; EF migrations should describe the difference between the
+last committed model and the current model.
+
 ## Features
 
 - Curated per-business-type equipment catalogs

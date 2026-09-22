@@ -1,0 +1,293 @@
+[1mdiff --git a/Controllers/AdminController.cs b/Controllers/AdminController.cs[m
+[1mindex 012bdb5..6a9591e 100644[m
+[1m--- a/Controllers/AdminController.cs[m
+[1m+++ b/Controllers/AdminController.cs[m
+[36m@@ -1,74 +1,265 @@[m
+ using Bizbox.Data;[m
+ using Bizbox.Models;[m
+[32m+[m[32musing Bizbox.ViewModels;[m
+ using Microsoft.AspNetCore.Authorization;[m
+ using Microsoft.AspNetCore.Mvc;[m
+ using Microsoft.EntityFrameworkCore;[m
+ [m
+ namespace Bizbox.Controllers;[m
+ [m
+[31m-// Simulated manufacturer/supplier role — admin pushes new listings and marks[m
+[31m-// old ones as superseded. See project context doc, Section 6.[m
+ [Authorize(Roles = "Admin")][m
+ public class AdminController : Controller[m
+ {[m
+     private readonly ApplicationDbContext _db;[m
+[32m+[m[32m    private readonly IWebHostEnvironment _environment;[m
+[32m+[m[32m    private readonly ILogger<AdminController> _logger;[m
+ [m
+[31m-    public AdminController(ApplicationDbContext db)[m
+[32m+[m[32m    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        ".jpg", ".jpeg", ".png", ".webp"[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    private const long MaxImageBytes = 5 * 1024 * 1024;[m
+[32m+[m
+[32m+[m[32m    public AdminController([m
+[32m+[m[32m        ApplicationDbContext db,[m
+[32m+[m[32m        IWebHostEnvironment environment,[m
+[32m+[m[32m        ILogger<AdminController> logger)[m
+     {[m
+         _db = db;[m
+[32m+[m[32m        _environment = environment;[m
+[32m+[m[32m        _logger = logger;[m
+     }[m
+ [m
+     public async Task<IActionResult> Index()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        var model = new AdminDashboardViewModel[m
+[32m+[m[32m        {[m
+[32m+[m[32m            ProductCount = await _db.Products.CountAsync(p => p.SellerType == ListingSellerType.Platform),[m
+[32m+[m[32m            ActiveProductCount = await _db.Products.CountAsync(p => p.SellerType == ListingSellerType.Platform && p.IsActive),[m
+[32m+[m[32m            BusinessTypeCount = await _db.BusinessTypes.CountAsync(),[m
+[32m+[m[32m            UserCount = await _db.Users.CountAsync(),[m
+[32m+[m[32m            OrderCount = await _db.Orders.CountAsync(),[m
+[32m+[m[32m            OrderValue = await _db.Orders.SumAsync(o => (decimal?)o.TotalAmount) ?? 0m,[m
+[32m+[m[32m            RecentProducts = await _db.Products[m
+[32m+[m[32m                .AsNoTracking()[m
+[32m+[m[32m                .Include(p => p.BusinessType)[m
+[32m+[m[32m                .Where(p => p.SellerType == ListingSellerType.Platform)[m
+[32m+[m[32m                .OrderByDescending(p => p.Id)[m
+[32m+[m[32m                .Take(10)[m
+[32m+[m[32m                .ToListAsync()[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        return View(model);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public async Task<IActionResult> Products()[m
+     {[m
+         var products = await _db.Products[m
+[32m+[m[32m            .AsNoTracking()[m
+             .Include(p => p.BusinessType)[m
+             .Where(p => p.SellerType == ListingSellerType.Platform)[m
+[32m+[m[32m            .OrderBy(p => p.BusinessTypeId)[m
+[32m+[m[32m            .ThenBy(p => p.Name)[m
+             .ToListAsync();[m
+[32m+[m
+         return View(products);[m
+     }[m
+ [m
+[32m+[m[32m    [HttpGet][m
+     public async Task<IActionResult> Create()[m
+     {[m
+[31m-        ViewBag.BusinessTypes = await _db.BusinessTypes.ToListAsync();[m
+[31m-        ViewBag.ExistingProducts = await _db.Products[m
+[31m-            .Where(p => p.SellerType == ListingSellerType.Platform)[m
+[31m-            .ToListAsync();[m
+[31m-        return View();[m
+[32m+[m[32m        var model = new AdminProductFormViewModel();[m
+[32m+[m[32m        await PopulateProductFormAsync(model);[m
+[32m+[m[32m        return View(model);[m
+     }[m
+ [m
+     [HttpPost][m
+[31m-    public async Task<IActionResult> Create(string name, string description, decimal price, int businessTypeId, string? manufacturer, string? specs, string? imagePath, int? supersedesProductId)[m
+[32m+[m[32m    [ValidateAntiForgeryToken][m
+[32m+[m[32m    public async Task<IActionResult> Create(AdminProductFormViewModel model)[m
+     {[m
+[32m+[m[32m        await PopulateProductFormAsync(model);[m
+[32m+[m
+[32m+[m[32m        if (!ModelState.IsValid)[m
+[32m+[m[32m            return View(model);[m
+[32m+[m
+[32m+[m[32m        var imagePath = await SaveImageAsync(model.Image);[m
+[32m+[m[32m        if (model.Image != null && imagePath == null)[m
+[32m+[m[32m            return View(model);[m
+[32m+[m
+         var product = new Product[m
+         {[m
+[31m-            Name = name,[m
+[31m-            Description = description,[m
+[31m-            Manufacturer = manufacturer,[m
+[31m-            Specs = specs,[m
+[32m+[m[32m            Name = model.Name.Trim(),[m
+[32m+[m[32m            Description = model.Description?.Trim() ?? string.Empty,[m
+[32m+[m[32m            Manufacturer = Clean(model.Manufacturer),[m
+[32m+[m[32m            Specs = Clean(model.Specs),[m
+             ImagePath = imagePath,[m
+[31m-            Price = price,[m
+[31m-            BusinessTypeId = businessTypeId,[m
+[32m+[m[32m            Price = model.Price,[m
+[32m+[m[32m            BusinessTypeId = model.BusinessTypeId,[m
+             SellerType = ListingSellerType.Platform,[m
+             Condition = ProductCondition.New,[m
+[31m-            SupersedesProductId = supersedesProductId,[m
+[31m-            IsActive = true[m
+[32m+[m[32m            SupersedesProductId = model.SupersedesProductId,[m
+[32m+[m[32m            IsActive = model.IsActive[m
+         };[m
+ [m
+         _db.Products.Add(product);[m
+         await _db.SaveChangesAsync();[m
+ [m
+[31m-        return RedirectToAction("Index");[m
+[32m+[m[32m        TempData["AdminMessage"] = $"Product '{product.Name}' created.";[m
+[32m+[m[32m        return RedirectToAction(nameof(Products));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    [HttpGet][m
+[32m+[m[32m    public async Task<IActionResult> Edit(int id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        var product = await _db.Products[m
+[32m+[m[32m            .FirstOrDefaultAsync(p => p.Id == id && p.SellerType == ListingSellerType.Platform);[m
+[32m+[m
+[32m+[m[32m        if (product == null)[m
+[32m+[m[32m            return NotFound();[m
+[32m+[m
+[32m+[m[32m        var model = new AdminProductFormViewModel[m
+[32m+[m[32m        {[m
+[32m+[m[32m            Id = product.Id,[m
+[32m+[m[32m            Name = product.Name,[m
+[32m+[m[32m            Description = product.Description,[m
+[32m+[m[32m            Manufacturer = product.Manufacturer,[m
+[32m+[m[32m            Specs = product.Specs,[m
+[32m+[m[32m            Price = product.Price,[m
+[32m+[m[32m            BusinessTypeId = product.BusinessTypeId,[m
+[32m+[m[32m            SupersedesProductId = product.SupersedesProductId,[m
+[32m+[m[32m            IsActive = product.IsActive,[m
+[32m+[m[32m            ExistingImagePath = product.ImagePath[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        await PopulateProductFormAsync(model, product.Id);[m
+[32m+[m[32m        return View(model);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    [HttpPost][m
+[32m+[m[32m    [ValidateAntiForgeryToken][m
+[32m+[m[32m    public async Task<IActionResult> Edit(int id, AdminProductFormViewModel model)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (id != model.Id)[m
+[32m+[m[32m            return BadRequest();[m
+[32m+[m
+[32m+[m[32m        var product = await _db.Products[m
+[32m+[m[32m            .FirstOrDefaultAsync(p => p.Id == id && p.SellerType == ListingSellerType.Platform);[m
+[32m+[m
+[32m+[m[32m        if (product == null)[m
+[32m+[m[32m            return NotFound();[m
+[32m+[m
+[32m+[m[32m        await PopulateProductFormAsync(model, product.Id);[m
+[32m+[m[32m        model.ExistingImagePath = product.ImagePath;[m
+[32m+[m
+[32m+[m[32m        if (!ModelState.IsValid)[m
+[32m+[m[32m            return View(model);[m
+[32m+[m
+[32m+[m[32m        var oldImagePath = product.ImagePath;[m
+[32m+[m[32m        var newImagePath = await SaveImageAsync(model.Image);[m
+[32m+[m[32m        if (model.Image != null && newImagePath == null)[m
+[32m+[m[32m            return View(model);[m
+[32m+[m
+[32m+[m[32m        product.Name = model.Name.Trim();[m
+[32m+[m[32m        product.Description = model.Description?.Trim() ?? string.Empty;[m
+[32m+[m[32m        product.Manufacturer = Clean(model.Manufacturer);[m
+[32m+[m[32m        product.Specs = Clean(model.Specs);[m
+[32m+[m[32m        product.Price = model.Price;[m
+[32m+[m[32m        product.BusinessTypeId = model.BusinessTypeId;[m
+[32m+[m[32m        product.SupersedesProductId = model.SupersedesProductId;[m
+[32m+[m[32m        product.IsActive = model.IsActive;[m
+[32m+[m
+[32m+[m[32m        if (newImagePath != null)[m
+[32m+[m[32m            product.ImagePath = newImagePath;[m
+[32m+[m
+[32m+[m[32m        await _db.SaveChangesAsync();[m
+[32m+[m
+[32m+[m[32m        if (newImagePath != null)[m
+[32m+[m[32m            DeleteLocalImage(oldImagePath);[m
+[32m+[m
+[32m+[m[32m        TempData["AdminMessage"] = $"Product '{product.Name}' updated.";[m
+[32m+[m[32m        return RedirectToAction(nameof(Products));[m
+     }[m
+ [m
+     [HttpPost][m
+[32m+[m[32m    [ValidateAntiForgeryToken][m
+     public async Task<IActionResult> ToggleActive(int id)[m
+     {[m
+[31m-        var product = await _db.Products.FindAsync(id);[m
+[31m-        if (product != null)[m
+[32m+[m[32m        var product = await _db.Products[m
+[32m+[m[32m            .FirstOrDefaultAsync(p => p.Id == id && p.SellerType == ListingSellerType.Platform);[m
+[32m+[m
+[32m+[m[32m        if (product == null)[m
+[32m+[m[32m            return NotFound();[m
+[32m+[m
+[32m+[m[32m        product.IsActive = !product.IsActive;[m
+[32m+[m[32m        await _db.SaveChangesAsync();[m
+[32m+[m
+[32m+[m[32m        TempData["AdminMessage"] = $"Product '{product.Name}' is now {(product.IsActive ? "active" : "inactive")}.";[m
+[32m+[m[32m        return RedirectToAction(nameof(Products));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private async Task PopulateProductFormAsync(AdminProductFormViewModel model, int? currentProductId = null)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        model.BusinessTypes = await _db.BusinessTypes[m
+[32m+[m[32m            .AsNoTracking()[m
+[32m+[m[32m            .OrderBy(bt => bt.Name)[m
+[32m+[m[32m            .ToListAsync();[m
+[32m+[m
+[32m+[m[32m        model.ExistingProducts = await _db.Products[m
+[32m+[m[32m            .AsNoTracking()[m
+[32m+[m[32m            .Where(p => p.SellerType == ListingSellerType.Platform && (!currentProductId.HasValue || p.Id != currentProductId.Value))[m
+[32m+[m[32m            .OrderBy(p => p.Name)[m
+[32m+[m[32m            .ToListAsync();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private async Task<string?> SaveImageAsync(IFormFile? image)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (image == null || image.Length == 0)[m
+[32m+[m[32m            return null;[m
+[32m+[m
+[32m+[m[32m        if (image.Length > MaxImageBytes)[m
+         {[m
+[31m-            product.IsActive = !product.IsActive;[m
+[31m-            await _db.SaveChangesAsync();[m
+[32m+[m[32m            ModelState.AddModelError(nameof(AdminProductFormViewModel.Image), "Image must be 5 MB or smaller.");[m
+[32m+[m[32m            return null;[m
+         }[m
+[31m-        return RedirectToAction("Index");[m
+[32m+[m
+[32m+[m[32m        var extension = Path.GetExtension(image.FileName);[m
+[32m+[m[32m        if (!AllowedImageExtensions.Contains(extension))[m
+[32m+[m[32m        {[m
+[32m+[m[32m            ModelState.AddModelError(nameof(AdminProductFormViewModel.Image), "Only JPG, JPEG, PNG, and WEBP images are allowed.");[m
+[32m+[m[32m            return null;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        var uploadDirectory = Path.Combine(_environment.WebRootPath, "uploads", "products");[m
+[32m+[m[32m        Directory.CreateDirectory(uploadDirectory);[m
+[32m+[m
+[32m+[m[32m        var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";[m
+[32m+[m[32m        var filePath = Path.Combine(uploadDirectory, fileName);[m
+[32m+[m
+[32m+[m[32m        await using var stream = System.IO.File.Create(filePath);[m
+[32m+[m[32m        await image.CopyToAsync(stream);[m
+[32m+[m
+[32m+[m[32m        return $"/uploads/products/{fileName}";[m
+     }[m
+[32m+[m
+[32m+[m[32m    private void DeleteLocalImage(string? imagePath)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (string.IsNullOrWhiteSpace(imagePath) || !imagePath.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase))[m
+[32m+[m[32m            return;[m
+[32m+[m
+[32m+[m[32m        try[m
+[32m+[m[32m        {[m
+[32m+[m[32m            var relative = imagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);[m
+[32m+[m[32m            var fullPath = Path.Combine(_environment.WebRootPath, relative);[m
+[32m+[m[32m            if (System.IO.File.Exists(fullPath))[m
+[32m+[m[32m                System.IO.File.Delete(fullPath);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        catch (Exception ex)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            _logger.LogWarning(ex, "Could not delete old product image {ImagePath}", imagePath);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private static string? Clean(string? value) =>[m
+[32m+[m[32m        string.IsNullOrWhiteSpace(value) ? null : value.Trim();[m
+ }[m

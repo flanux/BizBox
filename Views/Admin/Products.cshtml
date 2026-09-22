@@ -1,0 +1,81 @@
+@model List<Bizbox.Models.Product>
+@{
+    ViewData["Title"] = "Manage Products";
+}
+
+<div class="admin-shell">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-title">Control Center</div>
+        <a class="admin-nav-link" asp-action="Index">Dashboard</a>
+        <a class="admin-nav-link active" asp-action="Products">Products</a>
+        <a class="admin-nav-link" asp-action="Create">Add Product</a>
+    </aside>
+
+    <section class="admin-main">
+        <div class="page-header">
+            <span class="eyebrow">Catalog</span>
+            <div class="admin-header-row">
+                <div>
+                    <h1>Products</h1>
+                    <p>Edit pricing, descriptions, specifications, images, visibility, and relationships.</p>
+                </div>
+                <a class="btn" asp-action="Create">+ Add Product</a>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] is string message)
+        {
+            <div class="admin-alert">@message</div>
+        }
+
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Business</th>
+                        <th>Manufacturer</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="admin-table-product">
+                                    <div class="admin-product-thumb small">
+                                        @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                        {
+                                            <img src="@p.ImagePath" alt="@p.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span>IMG</span>
+                                        }
+                                    </div>
+                                    <div><strong>@p.Name</strong><small>@p.Specs</small></div>
+                                </div>
+                            </td>
+                            <td>@p.BusinessType?.Name</td>
+                            <td>@(p.Manufacturer ?? "—")</td>
+                            <td>Rs. @p.Price.ToString("N0")</td>
+                            <td><span class="pill @(p.IsActive ? "pill-new" : "pill-fair")">@(p.IsActive ? "Active" : "Inactive")</span></td>
+                            <td>
+                                <div class="admin-actions">
+                                    <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                                    <form method="post" asp-action="ToggleActive" asp-route-id="@p.Id">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-secondary btn-sm">@(p.IsActive ? "Disable" : "Enable")</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
