@@ -30,10 +30,11 @@ public class BusinessTypeController : Controller
 
         if (businessType == null) return NotFound();
 
-        // Only show active, platform (new) listings on the main catalog page.
-        // Resale listings are shown separately (see Pillar 2 — not yet built here).
+        // Show both new (platform) and resale listings together — one browsing
+        // surface per business type, distinguished only by badge on the card.
         businessType.Products = businessType.Products
-            .Where(p => p.IsActive && p.SellerType == ListingSellerType.Platform)
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SellerType) // platform (0) listings first, then resale (1)
             .ToList();
 
         return View(businessType);

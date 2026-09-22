@@ -1,5 +1,7 @@
 namespace Bizbox.Helpers;
 
+using Bizbox.Models;
+
 // Maps product/business names to a representative icon (emoji) and a soft
 // background tint, so every catalog card has a consistent visual anchor
 // without depending on external/hotlinked images that could break or be
@@ -38,5 +40,20 @@ public static class IconHelper
         if (n.Contains("restaurant")) return "\ud83c\udf7d\ufe0f";
         if (n.Contains("salon")) return "\ud83d\udc87";
         return "\ud83c\udfea";
+    }
+
+    // Status pill CSS class + label for a product listing.
+    public static (string CssClass, string Label) GetStatusPill(Product p)
+    {
+        if (p.SupersedesProductId != null) return ("pill-upgrade", "New Model");
+        if (p.SellerType == ListingSellerType.Platform) return ("pill-new", "New");
+
+        return p.Condition switch
+        {
+            ProductCondition.LikeNew => ("pill-likenew", "Like New"),
+            ProductCondition.Good => ("pill-good", "Good"),
+            ProductCondition.Fair => ("pill-fair", "Fair"),
+            _ => ("pill-new", "New")
+        };
     }
 }

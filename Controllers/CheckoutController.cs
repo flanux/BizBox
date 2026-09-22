@@ -35,7 +35,7 @@ public class CheckoutController : Controller
             return RedirectToAction("Index", "Cart");
         }
         ViewBag.Total = await _cartService.GetCartTotalAsync(userId);
-        return View();
+        return View(items);
     }
 
     [HttpPost]

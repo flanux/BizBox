@@ -1,12 +1,12 @@
 @{
-    ViewData["Title"] = "List an Item";
+    ViewData["Title"] = "Sell an Item";
 }
 <div class="page-header">
     <span class="eyebrow">Marketplace</span>
     <h1>List a Used Item</h1>
 </div>
 
-<form method="post" asp-action="Create" asp-controller="Resale" style="max-width: 480px;">
+<form method="post" asp-action="Create" asp-controller="Resale" style="max-width: 520px;" enctype="multipart/form-data">
     <label>Item name<input type="text" name="name" required /></label>
     <label>Description<textarea name="description" rows="3"></textarea></label>
     <label>Price (Rs.)<input type="number" name="price" step="0.01" required /></label>
@@ -26,6 +26,10 @@
             <option value="Good">Good</option>
             <option value="Fair">Fair</option>
         </select>
+    </label>
+
+    <label>Photo <span class="text-muted">(not yet stored — display only for now)</span>
+        <input type="file" name="photo" accept="image/*" disabled />
     </label>
 
     <button type="submit" class="btn btn-block">List Item</button>

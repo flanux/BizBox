@@ -1,81 +1,88 @@
 @using Bizbox.Helpers
-@model List<Product>
+@using Bizbox.Models
 @{
     ViewData["Title"] = "Home";
     var businessTypes = (List<BusinessType>)ViewBag.BusinessTypes;
-    int? selected = ViewBag.SelectedCategory;
+    var byCategory = (Dictionary<int, List<Product>>)ViewBag.ProductsByCategory;
+    var searchResults = (List<Product>?)ViewBag.SearchResults;
     string? term = ViewBag.SearchTerm;
 }
 
 <section class="hero">
     <h1>Pick your business type. Get equipped.</h1>
-    <p class="subtitle">Curated equipment for starting a small business — browse everything below, or jump into a category.</p>
+    <p class="subtitle">Curated equipment for coffee shops, bakeries, restaurants, and salons — browse below, or search for something specific.</p>
+
+    <form method="get" asp-action="Index" asp-controller="Home" class="filter-bar" style="margin-top: var(--space-4);">
+        <input type="text" name="q" value="@term" placeholder="Search equipment..." />
+        <button type="submit" class="btn btn-sm">Search</button>
+        @if (!string.IsNullOrWhiteSpace(term))
+        {
+            <a class="chip" href="@Url.Action("Index", "Home")">Clear</a>
+        }
+    </form>
 </section>
 
-<div class="business-strip">
-    <a class="business-pill @(selected == null ? "active" : "")" href="@Url.Action("Index", "Home")">
-        <span class="icon">🏪</span> All
-    </a>
-    @foreach (var bt in businessTypes)
+@if (searchResults != null)
+{
+    <div class="page-header">
+        <h2>Results for "@term"</h2>
+    </div>
+    @if (!searchResults.Any())
     {
-        <a class="business-pill" href="@Url.Action("Catalog", "BusinessType", new { id = bt.Id })">
-            <span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span> @bt.Name
-        </a>
+        <div class="empty-state"><span class="icon">🔍</span><p>No equipment matches your search.</p></div>
     }
-</div>
-
-<form method="get" asp-action="Index" asp-controller="Home" class="filter-bar">
-    <input type="text" name="q" value="@term" placeholder="Search equipment..." />
-    <div class="chip-row">
-        <a class="chip @(selected == null ? "active" : "")" href="@Url.Action("Index", "Home", new { q = term })">All</a>
-        @foreach (var bt in businessTypes)
+    else
+    {
+        @foreach (var product in searchResults)
         {
-            <a class="chip @(selected == bt.Id ? "active" : "")" href="@Url.Action("Index", "Home", new { category = bt.Id, q = term })">@bt.Name</a>
-        }
-    </div>
-    <button type="submit" class="btn btn-sm">Search</button>
-</form>
-
-@if (!Model.Any())
-{
-    <div class="empty-state">
-        <span class="icon">🔍</span>
-        <p>No equipment matches your search.</p>
-    </div>
-}
-else
-{
-    <div class="grid">
-        @foreach (var product in Model)
-        {
-            <div class="card">
-                <div class="card-icon-row">@IconHelper.GetIcon(product.Name)</div>
-                <div class="card-body">
-                    <span class="card-tag">@product.BusinessType?.Name</span>
-                    @if (product.SupersedesProductId != null)
-                    {
-                        <span class="badge badge-upgrade">New Model</span>
-                    }
-                    <h3 class="card-title">@product.Name</h3>
-                    <p class="card-desc">@product.Description</p>
-                    <p class="card-price">Rs. @product.Price.ToString("N0")</p>
-
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <form method="post" asp-action="AddToCart" asp-controller="BusinessType">
-                            <input type="hidden" name="productId" value="@product.Id" />
-                            <input type="hidden" name="businessTypeId" value="@product.BusinessTypeId" />
-                            <button type="submit" class="btn btn-block btn-sm">Add to Cart</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a class="btn btn-block btn-sm" asp-area="Identity" asp-page="/Account/Login">Login to buy</a>
-                    }
+            var (pillClass, pillLabel) = IconHelper.GetStatusPill(product);
+            <div class="hcard">
+                <div class="hcard-media"><span class="pill @pillClass">@pillLabel</span>@IconHelper.GetIcon(product.Name)</div>
+                <div class="hcard-body">
+                    <div class="hcard-manufacturer">@product.Manufacturer</div>
+                    <div class="hcard-title">@product.Name</div>
+                    <p class="hcard-desc">@product.Description</p>
+                    <div class="hcard-bottom">
+                        <span class="hcard-price">Rs. @product.Price.ToString("N0")</span>
+                        <a class="btn btn-sm" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@product.BusinessTypeId">View in catalog</a>
+                    </div>
                 </div>
             </div>
         }
-    </div>
+    }
+}
+else
+{
+    @foreach (var bt in businessTypes)
+    {
+        var products = byCategory.ContainsKey(bt.Id) ? byCategory[bt.Id] : new List<Product>();
+        <section class="category-section">
+            <div class="category-header">
+                <h2><span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span>@bt.Name</h2>
+                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">View all &rarr;</a>
+            </div>
+
+            @if (!products.Any())
+            {
+                <p class="text-muted">No items listed yet.</p>
+            }
+            else
+            {
+                <div class="mini-grid">
+                    @foreach (var product in products)
+                    {
+                        <a class="mini-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id" style="color:inherit;text-decoration:none;">
+                            <div class="mini-card-media">@IconHelper.GetIcon(product.Name)</div>
+                            <div class="mini-card-body">
+                                <div class="mini-card-title">@product.Name</div>
+                                <div class="mini-card-price">Rs. @product.Price.ToString("N0")</div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    }
 }
 
 <section class="how-it-works">

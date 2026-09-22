@@ -6,9 +6,11 @@
     <h1>Add a Product</h1>
 </div>
 
-<form method="post" asp-action="Create" asp-controller="Admin" style="max-width: 480px;">
+<form method="post" asp-action="Create" asp-controller="Admin" style="max-width: 520px;">
     <label>Name<input type="text" name="name" required /></label>
+    <label>Manufacturer<input type="text" name="manufacturer" /></label>
     <label>Description<textarea name="description" rows="3"></textarea></label>
+    <label>Specs <span class="text-muted">(short, separated by · )</span><input type="text" name="specs" /></label>
     <label>Price (Rs.)<input type="number" name="price" step="0.01" required /></label>
 
     <label>Business type

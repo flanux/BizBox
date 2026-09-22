@@ -1,3 +1,5 @@
+@using Bizbox.Helpers
+@model List<CartItem>
 @{
     ViewData["Title"] = "Checkout";
 }
@@ -5,26 +7,41 @@
 <div class="page-header">
     <span class="eyebrow">Checkout</span>
     <h1>Checkout</h1>
-    <p>Order total: <strong>Rs. @ViewBag.Total</strong></p>
 </div>
 
-<form method="post" asp-action="PlaceOrder" asp-controller="Checkout" style="max-width: 480px;">
-    <fieldset>
-        <legend>Choose payment method</legend>
+<div class="checkout-grid">
+    <div class="checkout-summary">
+        <h3 style="margin-bottom: var(--space-3);">Order Summary</h3>
+        @foreach (var item in Model)
+        {
+            <div class="checkout-summary-row">
+                <span>@item.Product?.Name &times; @item.Quantity</span>
+                <span>Rs. @((item.Product?.Price ?? 0) * item.Quantity)</span>
+            </div>
+        }
+        <div class="checkout-summary-row">
+            <span>Total</span>
+            <span>Rs. @ViewBag.Total</span>
+        </div>
+    </div>
 
-        <label style="font-weight:500;">
-            <input type="radio" name="paymentMethod" value="Esewa" checked />
-            eSewa
-        </label>
-        <label style="font-weight:500;">
-            <input type="radio" name="paymentMethod" value="Khalti" />
-            Khalti
-        </label>
-        <label style="font-weight:500;">
-            <input type="radio" name="paymentMethod" value="InternationalCard_Simulated" />
-            International Card
-        </label>
-    </fieldset>
+    <div class="payment-panel">
+        <h3 style="margin-bottom: var(--space-3);">Payment Method</h3>
+        <form method="post" asp-action="PlaceOrder" asp-controller="Checkout">
+            <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="Esewa" checked />
+                <span class="name">eSewa</span>
+            </label>
+            <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="Khalti" />
+                <span class="name">Khalti</span>
+            </label>
+            <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="InternationalCard_Simulated" />
+                <span class="name">International Card <span class="text-muted" style="font-weight:400;">(simulated)</span></span>
+            </label>
 
-    <button type="submit" class="btn btn-block">Pay Now</button>
-</form>
+            <button type="submit" class="btn btn-block" style="margin-top: var(--space-3);">Pay Now</button>
+        </form>
+    </div>
+</div>

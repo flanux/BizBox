@@ -11,27 +11,20 @@
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <span class="icon">🔔</span>
-        <p>No upgrade notifications right now.</p>
-    </div>
+    <div class="empty-state"><span class="icon">🔔</span><p>No upgrade notifications right now.</p></div>
 }
 else
 {
-    <div class="grid">
-        @foreach (var upgrade in Model)
-        {
-            <div class="card">
-                <div class="card-icon-row">@IconHelper.GetIcon(upgrade.Name)</div>
-                <div class="card-body">
-                    <span class="badge badge-upgrade">Upgrade Available</span>
-                    <p class="card-meta" style="margin-top:var(--space-2);">Replaces: @upgrade.Supersedes?.Name</p>
-                    <h3 class="card-title">@upgrade.Name</h3>
-                    <p class="card-desc">@upgrade.Description</p>
-                    <p class="card-price">Rs. @upgrade.Price.ToString("N0")</p>
-                    <a class="btn btn-block btn-secondary" asp-controller="Resale" asp-action="Index">List your old one</a>
-                </div>
+    @foreach (var upgrade in Model)
+    {
+        var priceDiff = upgrade.Price - (upgrade.Supersedes?.Price ?? 0);
+        <div class="notif-row">
+            <span class="pill pill-upgrade">New Model</span>
+            <div class="desc">
+                <strong>@upgrade.Supersedes?.Name &rarr; @upgrade.Name</strong>
+                <span class="text-muted">@(priceDiff >= 0 ? "+" : "")Rs. @priceDiff.ToString("N0") vs. your current model</span>
             </div>
-        }
-    </div>
+            <a class="btn btn-sm" asp-controller="Resale" asp-action="Index">List your old one</a>
+        </div>
+    }
 }

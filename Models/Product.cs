@@ -27,6 +27,15 @@ public class Product
     [MaxLength(600)]
     public string Description { get; set; } = string.Empty;
 
+    [MaxLength(80)]
+    public string? Manufacturer { get; set; }
+
+    // Short spec lines, one per line (e.g. "230V · 15A", "2.5L tank", "Stainless steel body").
+    // Kept as free text rather than a separate table — this project's scale doesn't need
+    // structured spec attributes, and free text is simplest for the seeded catalog to show.
+    [MaxLength(400)]
+    public string? Specs { get; set; }
+
     [Column(TypeName = "decimal(10,2)")]
     public decimal Price { get; set; }
 

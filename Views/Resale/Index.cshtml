@@ -7,32 +7,29 @@
 <div class="page-header">
     <span class="eyebrow">Marketplace</span>
     <h1>Resale &amp; Trade-in Marketplace</h1>
-    <p>Equipment listed by other users, at a discount versus buying new.</p>
-    <a class="btn" href="@Url.Action("Create")">List an item</a>
+    <p>Equipment listed by other users, across all business types.</p>
+    <a class="btn" href="@Url.Action("Create")">Sell an item</a>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <span class="icon">🏷️</span>
-        <p>No resale listings yet.</p>
-    </div>
+    <div class="empty-state"><span class="icon">🏷️</span><p>No resale listings yet.</p></div>
 }
 else
 {
-    <div class="grid">
-        @foreach (var item in Model)
-        {
-            <div class="card">
-                <div class="card-icon-row">@IconHelper.GetIcon(item.Name)</div>
-                <div class="card-body">
-                    <span class="badge badge-condition">@item.Condition</span>
-                    <h3 class="card-title">@item.Name</h3>
-                    <p class="card-desc">@item.Description</p>
-                    <p class="card-meta">@item.BusinessType?.Name</p>
-                    <p class="card-price">Rs. @item.Price.ToString("N0")</p>
+    @foreach (var item in Model)
+    {
+        var (pillClass, pillLabel) = IconHelper.GetStatusPill(item);
+        <div class="hcard">
+            <div class="hcard-media"><span class="pill @pillClass">@pillLabel</span>@IconHelper.GetIcon(item.Name)</div>
+            <div class="hcard-body">
+                <div class="hcard-manufacturer">@item.BusinessType?.Name</div>
+                <div class="hcard-title">@item.Name</div>
+                <p class="hcard-desc">@item.Description</p>
+                <div class="hcard-bottom">
+                    <span class="hcard-price">Rs. @item.Price.ToString("N0")</span>
                 </div>
             </div>
-        }
-    </div>
+        </div>
+    }
 }
