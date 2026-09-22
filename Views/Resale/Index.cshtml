@@ -24,7 +24,7 @@ else
         @foreach (var item in Model)
         {
             <div class="card">
-                <div class="icon-tile">@IconHelper.GetIcon(item.Name)</div>
+                <div class="card-icon-row">@IconHelper.GetIcon(item.Name)</div>
                 <div class="card-body">
                     <span class="badge badge-condition">@item.Condition</span>
                     <h3 class="card-title">@item.Name</h3>

@@ -7,7 +7,7 @@
 <div class="page-header">
     <span class="eyebrow">Starter Kit</span>
     <h1>@IconHelper.GetBusinessIcon(Model.Name) @Model.Name</h1>
-    <p>@Model.ShortDescription Browse everything below, add individual pieces, or grab the whole kit at once.</p>
+    <p>@Model.ShortDescription</p>
 </div>
 
 @if (!Model.Products.Any())
@@ -23,11 +23,11 @@ else
         @foreach (var product in Model.Products)
         {
             <div class="card">
-                <div class="icon-tile">@IconHelper.GetIcon(product.Name)</div>
+                <div class="card-icon-row">@IconHelper.GetIcon(product.Name)</div>
                 <div class="card-body">
                     @if (product.SupersedesProductId != null)
                     {
-                        <span class="badge badge-upgrade">Newer Model</span>
+                        <span class="badge badge-upgrade">New Model</span>
                     }
                     <h3 class="card-title">@product.Name</h3>
                     <p class="card-desc">@product.Description</p>
@@ -38,12 +38,12 @@ else
                         <form method="post" asp-action="AddToCart" asp-controller="BusinessType">
                             <input type="hidden" name="productId" value="@product.Id" />
                             <input type="hidden" name="businessTypeId" value="@Model.Id" />
-                            <button type="submit" class="btn btn-block">Add to Cart</button>
+                            <button type="submit" class="btn btn-block btn-sm">Add to Cart</button>
                         </form>
                     }
                     else
                     {
-                        <a class="btn btn-block" asp-area="Identity" asp-page="/Account/Login"
+                        <a class="btn btn-block btn-sm" asp-area="Identity" asp-page="/Account/Login"
                            asp-route-returnUrl="@Url.Action("Catalog", "BusinessType", new { id = Model.Id })">
                            Login to buy
                         </a>

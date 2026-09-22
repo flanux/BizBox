@@ -27,7 +27,7 @@ else
     @foreach (var item in Model)
     {
         <div class="cart-row">
-            <div class="icon-tile">@IconHelper.GetIcon(item.Product?.Name ?? "")</div>
+            <div class="card-icon-row">@IconHelper.GetIcon(item.Product?.Name ?? "")</div>
             <div class="info">
                 <strong>@item.Product?.Name</strong>
                 <p class="text-muted" style="margin:0;">Qty: @item.Quantity &middot; Rs. @item.Product?.Price.ToString("N0") each</p>

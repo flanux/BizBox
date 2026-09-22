@@ -1,39 +1,88 @@
 @using Bizbox.Helpers
-@model List<BusinessType>
+@model List<Product>
 @{
     ViewData["Title"] = "Home";
+    var businessTypes = (List<BusinessType>)ViewBag.BusinessTypes;
+    int? selected = ViewBag.SelectedCategory;
+    string? term = ViewBag.SearchTerm;
 }
 
 <section class="hero">
     <h1>Pick your business type. Get equipped.</h1>
-    <p class="subtitle">Bizbox gives you a curated equipment list for the business you want to start &mdash; no hunting across vendors, no guesswork on what you actually need.</p>
+    <p class="subtitle">Curated equipment for starting a small business — browse everything below, or jump into a category.</p>
 </section>
 
-<section class="grid grid-business">
-    @foreach (var bt in Model)
+<div class="business-strip">
+    <a class="business-pill @(selected == null ? "active" : "")" href="@Url.Action("Index", "Home")">
+        <span class="icon">🏪</span> All
+    </a>
+    @foreach (var bt in businessTypes)
     {
-        <a class="business-type-card" href="@Url.Action("Catalog", "BusinessType", new { id = bt.Id })">
-            <span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span>
-            <h3>@bt.Name</h3>
-            <p>@bt.ShortDescription</p>
+        <a class="business-pill" href="@Url.Action("Catalog", "BusinessType", new { id = bt.Id })">
+            <span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span> @bt.Name
         </a>
     }
-</section>
+</div>
+
+<form method="get" asp-action="Index" asp-controller="Home" class="filter-bar">
+    <input type="text" name="q" value="@term" placeholder="Search equipment..." />
+    <div class="chip-row">
+        <a class="chip @(selected == null ? "active" : "")" href="@Url.Action("Index", "Home", new { q = term })">All</a>
+        @foreach (var bt in businessTypes)
+        {
+            <a class="chip @(selected == bt.Id ? "active" : "")" href="@Url.Action("Index", "Home", new { category = bt.Id, q = term })">@bt.Name</a>
+        }
+    </div>
+    <button type="submit" class="btn btn-sm">Search</button>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <span class="icon">🔍</span>
+        <p>No equipment matches your search.</p>
+    </div>
+}
+else
+{
+    <div class="grid">
+        @foreach (var product in Model)
+        {
+            <div class="card">
+                <div class="card-icon-row">@IconHelper.GetIcon(product.Name)</div>
+                <div class="card-body">
+                    <span class="card-tag">@product.BusinessType?.Name</span>
+                    @if (product.SupersedesProductId != null)
+                    {
+                        <span class="badge badge-upgrade">New Model</span>
+                    }
+                    <h3 class="card-title">@product.Name</h3>
+                    <p class="card-desc">@product.Description</p>
+                    <p class="card-price">Rs. @product.Price.ToString("N0")</p>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form method="post" asp-action="AddToCart" asp-controller="BusinessType">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <input type="hidden" name="businessTypeId" value="@product.BusinessTypeId" />
+                            <button type="submit" class="btn btn-block btn-sm">Add to Cart</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a class="btn btn-block btn-sm" asp-area="Identity" asp-page="/Account/Login">Login to buy</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
 
 <section class="how-it-works">
     <h2>How it works</h2>
     <ol class="steps">
-        <li>
-            <h3>Choose your business</h3>
-            <p class="text-muted">Pick from Coffee Shop, Bakery, Restaurant, or Salon.</p>
-        </li>
-        <li>
-            <h3>Build your kit</h3>
-            <p class="text-muted">Add the equipment you need &mdash; individually or as a full kit.</p>
-        </li>
-        <li>
-            <h3>Buy and get started</h3>
-            <p class="text-muted">Checkout securely and you're ready to open.</p>
-        </li>
+        <li><h3>1. Choose your business</h3><p class="text-muted">Coffee Shop, Bakery, Restaurant, or Salon.</p></li>
+        <li><h3>2. Build your kit</h3><p class="text-muted">Add equipment individually or as a full kit.</p></li>
+        <li><h3>3. Buy and get started</h3><p class="text-muted">Checkout securely and you're ready to open.</p></li>
     </ol>
 </section>

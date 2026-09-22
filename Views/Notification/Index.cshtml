@@ -22,7 +22,7 @@ else
         @foreach (var upgrade in Model)
         {
             <div class="card">
-                <div class="icon-tile">@IconHelper.GetIcon(upgrade.Name)</div>
+                <div class="card-icon-row">@IconHelper.GetIcon(upgrade.Name)</div>
                 <div class="card-body">
                     <span class="badge badge-upgrade">Upgrade Available</span>
                     <p class="card-meta" style="margin-top:var(--space-2);">Replaces: @upgrade.Supersedes?.Name</p>

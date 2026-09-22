@@ -30,12 +30,30 @@
 
     <footer class="site-footer">
         <div class="footer-inner">
-            <span>&copy; @DateTime.Now.Year Bizbox</span>
-            <span>
-                <a asp-controller="Home" asp-action="About">About</a> &middot;
+            <div class="footer-col">
+                <h4>Bizbox</h4>
+                <p>Curated equipment for starting a small business — coffee shops, bakeries, restaurants, and salons.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Shop</h4>
+                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="1">Coffee Shop</a>
+                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="2">Bakery</a>
+                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="3">Restaurant</a>
+                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="4">Salon</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a asp-controller="Home" asp-action="About">About</a>
                 <a asp-controller="Resale" asp-action="Index">Marketplace</a>
-            </span>
+            </div>
+            <div class="footer-col">
+                <h4>Account</h4>
+                <a asp-area="Identity" asp-page="/Account/Login">Login</a>
+                <a asp-area="Identity" asp-page="/Account/Register">Register</a>
+                <a asp-controller="Cart" asp-action="Index">Cart</a>
+            </div>
         </div>
+        <div class="footer-bottom">&copy; @DateTime.Now.Year Bizbox</div>
     </footer>
 </body>
 </html>
