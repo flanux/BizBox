@@ -37,7 +37,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(string name, string description, decimal price, int businessTypeId, string? manufacturer, string? specs, int? supersedesProductId)
+    public async Task<IActionResult> Create(string name, string description, decimal price, int businessTypeId, string? manufacturer, string? specs, string? imagePath, int? supersedesProductId)
     {
         var product = new Product
         {
@@ -45,6 +45,7 @@ public class AdminController : Controller
             Description = description,
             Manufacturer = manufacturer,
             Specs = specs,
+            ImagePath = imagePath,
             Price = price,
             BusinessTypeId = businessTypeId,
             SellerType = ListingSellerType.Platform,

@@ -25,7 +25,14 @@ else
         <div class="hcard">
             <div class="hcard-media">
                 <span class="pill @pillClass">@pillLabel</span>
-                @IconHelper.GetIcon(product.Name)
+                @if (!string.IsNullOrWhiteSpace(product.ImagePath))
+                {
+                    <img src="@product.ImagePath" alt="@product.Name" style="width:100%;height:100%;object-fit:cover;" />
+                }
+                else
+                {
+                    @IconHelper.GetIcon(product.Name)
+                }
             </div>
             <div class="hcard-body">
                 <div class="hcard-top">

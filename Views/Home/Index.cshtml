@@ -37,7 +37,10 @@
         {
             var (pillClass, pillLabel) = IconHelper.GetStatusPill(product);
             <div class="hcard">
-                <div class="hcard-media"><span class="pill @pillClass">@pillLabel</span>@IconHelper.GetIcon(product.Name)</div>
+                <div class="hcard-media">
+                    <span class="pill @pillClass">@pillLabel</span>
+                    @if (!string.IsNullOrWhiteSpace(product.ImagePath)) { <img src="@product.ImagePath" alt="@product.Name" style="width:100%;height:100%;object-fit:cover;" /> } else { @IconHelper.GetIcon(product.Name) }
+                </div>
                 <div class="hcard-body">
                     <div class="hcard-manufacturer">@product.Manufacturer</div>
                     <div class="hcard-title">@product.Name</div>
@@ -72,7 +75,9 @@ else
                     @foreach (var product in products)
                     {
                         <a class="mini-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id" style="color:inherit;text-decoration:none;">
-                            <div class="mini-card-media">@IconHelper.GetIcon(product.Name)</div>
+                            <div class="mini-card-media">
+                                @if (!string.IsNullOrWhiteSpace(product.ImagePath)) { <img src="@product.ImagePath" alt="@product.Name" style="width:100%;height:100%;object-fit:cover;" /> } else { @IconHelper.GetIcon(product.Name) }
+                            </div>
                             <div class="mini-card-body">
                                 <div class="mini-card-title">@product.Name</div>
                                 <div class="mini-card-price">Rs. @product.Price.ToString("N0")</div>
