@@ -1,0 +1,64 @@
+@model List<Bizbox.ViewModels.AdminUserRowViewModel>
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="admin-shell">
+    <partial name="_Sidebar" />
+
+    <section class="admin-main">
+        <div class="page-header">
+            <span class="eyebrow">Accounts</span>
+            <div class="admin-header-row">
+                <div>
+                    <h1>Users</h1>
+                    <p>Everyone with an account. Grant Super Admin access to trusted accounts only.</p>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] is string message)
+        {
+            <div class="admin-alert">@message</div>
+        }
+
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Orders</th>
+                        <th>Role</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        <tr>
+                            <td>@u.Email</td>
+                            <td>@(u.DisplayName ?? "—")</td>
+                            <td>@u.OrderCount</td>
+                            <td><span class="pill @(u.IsAdmin ? "pill-upgrade" : "pill-fair")">@(u.IsAdmin ? "Super Admin" : "Customer")</span></td>
+                            <td>
+                                @if (u.IsCurrentUser)
+                                {
+                                    <span class="text-muted">This is you</span>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-controller="Admin" asp-action="ToggleAdmin" asp-route-userId="@u.Id"
+                                          onsubmit="return confirm('Change this account&#39;s admin access?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-secondary btn-sm">@(u.IsAdmin ? "Remove admin" : "Make admin")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

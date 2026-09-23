@@ -2,6 +2,7 @@ using Bizbox.Data;
 using Bizbox.Models;
 using Bizbox.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,8 @@ public class AdminController : Controller
     private readonly ApplicationDbContext _db;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AdminController> _logger;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
     private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -20,16 +23,23 @@ public class AdminController : Controller
     };
 
     private const long MaxImageBytes = 5 * 1024 * 1024;
+    private const string AdminRole = "Admin";
 
     public AdminController(
         ApplicationDbContext db,
         IWebHostEnvironment environment,
-        ILogger<AdminController> logger)
+        ILogger<AdminController> logger,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _db = db;
         _environment = environment;
         _logger = logger;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
+
+    // ================= Dashboard =================
 
     public async Task<IActionResult> Index()
     {
@@ -52,6 +62,8 @@ public class AdminController : Controller
 
         return View(model);
     }
+
+    // ================= Products =================
 
     public async Task<IActionResult> Products()
     {
@@ -198,6 +210,37 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Products));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        var product = await _db.Products
+            .FirstOrDefaultAsync(p => p.Id == id && p.SellerType == ListingSellerType.Platform);
+
+        if (product == null)
+            return NotFound();
+
+        var isReferenced = await _db.Products.AnyAsync(p => p.SupersedesProductId == id)
+            || await _db.OrderItems.AnyAsync(oi => oi.ProductId == id)
+            || await _db.CartItems.AnyAsync(ci => ci.ProductId == id);
+
+        if (isReferenced)
+        {
+            TempData["AdminMessage"] = $"'{product.Name}' is referenced by an order, cart, or another product, so it was deactivated instead of deleted.";
+            product.IsActive = false;
+            await _db.SaveChangesAsync();
+            return RedirectToAction(nameof(Products));
+        }
+
+        var imagePath = product.ImagePath;
+        _db.Products.Remove(product);
+        await _db.SaveChangesAsync();
+        DeleteLocalImage(imagePath);
+
+        TempData["AdminMessage"] = $"Product '{product.Name}' deleted.";
+        return RedirectToAction(nameof(Products));
+    }
+
     private async Task PopulateProductFormAsync(AdminProductFormViewModel model, int? currentProductId = null)
     {
         model.BusinessTypes = await _db.BusinessTypes
@@ -262,4 +305,198 @@ public class AdminController : Controller
 
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    // ================= Business types (categories) =================
+
+    public async Task<IActionResult> BusinessTypes()
+    {
+        var rows = await _db.BusinessTypes
+            .AsNoTracking()
+            .OrderBy(bt => bt.Name)
+            .Select(bt => new AdminBusinessTypeRowViewModel
+            {
+                Id = bt.Id,
+                Name = bt.Name,
+                ShortDescription = bt.ShortDescription,
+                ProductCount = bt.Products.Count
+            })
+            .ToListAsync();
+
+        return View(rows);
+    }
+
+    [HttpGet]
+    public IActionResult BusinessTypeCreate()
+    {
+        return View(new AdminBusinessTypeFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BusinessTypeCreate(AdminBusinessTypeFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var businessType = new BusinessType
+        {
+            Name = model.Name.Trim(),
+            ShortDescription = model.ShortDescription?.Trim() ?? string.Empty
+        };
+
+        _db.BusinessTypes.Add(businessType);
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Category '{businessType.Name}' created.";
+        return RedirectToAction(nameof(BusinessTypes));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BusinessTypeEdit(int id)
+    {
+        var businessType = await _db.BusinessTypes.FindAsync(id);
+        if (businessType == null)
+            return NotFound();
+
+        var model = new AdminBusinessTypeFormViewModel
+        {
+            Id = businessType.Id,
+            Name = businessType.Name,
+            ShortDescription = businessType.ShortDescription
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BusinessTypeEdit(int id, AdminBusinessTypeFormViewModel model)
+    {
+        if (id != model.Id)
+            return BadRequest();
+
+        var businessType = await _db.BusinessTypes.FindAsync(id);
+        if (businessType == null)
+            return NotFound();
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        businessType.Name = model.Name.Trim();
+        businessType.ShortDescription = model.ShortDescription?.Trim() ?? string.Empty;
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Category '{businessType.Name}' updated.";
+        return RedirectToAction(nameof(BusinessTypes));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BusinessTypeDelete(int id)
+    {
+        var businessType = await _db.BusinessTypes.FindAsync(id);
+        if (businessType == null)
+            return NotFound();
+
+        var hasProducts = await _db.Products.AnyAsync(p => p.BusinessTypeId == id);
+        if (hasProducts)
+        {
+            TempData["AdminMessage"] = $"'{businessType.Name}' still has products assigned to it, so it can't be deleted. Move or remove those products first.";
+            return RedirectToAction(nameof(BusinessTypes));
+        }
+
+        _db.BusinessTypes.Remove(businessType);
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Category '{businessType.Name}' deleted.";
+        return RedirectToAction(nameof(BusinessTypes));
+    }
+
+    // ================= Orders =================
+
+    public async Task<IActionResult> Orders()
+    {
+        var orders = await _db.Orders
+            .AsNoTracking()
+            .Include(o => o.User)
+            .Include(o => o.Items)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+
+        return View(orders);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatus status)
+    {
+        var order = await _db.Orders.FindAsync(orderId);
+        if (order == null)
+            return NotFound();
+
+        order.Status = status;
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Order #{order.Id} marked as {order.Status}.";
+        return RedirectToAction(nameof(Orders));
+    }
+
+    // ================= Users =================
+
+    public async Task<IActionResult> Users()
+    {
+        var currentUserId = _userManager.GetUserId(User);
+        var users = await _db.Users.AsNoTracking().OrderBy(u => u.Email).ToListAsync();
+        var orderCounts = await _db.Orders
+            .GroupBy(o => o.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.UserId, g => g.Count);
+
+        var rows = new List<AdminUserRowViewModel>();
+        foreach (var user in users)
+        {
+            rows.Add(new AdminUserRowViewModel
+            {
+                Id = user.Id,
+                Email = user.Email ?? user.UserName ?? "—",
+                DisplayName = user.DisplayName,
+                IsAdmin = await _userManager.IsInRoleAsync(user, AdminRole),
+                IsCurrentUser = user.Id == currentUserId,
+                OrderCount = orderCounts.TryGetValue(user.Id, out var c) ? c : 0
+            });
+        }
+
+        return View(rows);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleAdmin(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        if (user.Id == _userManager.GetUserId(User))
+        {
+            TempData["AdminMessage"] = "You can't change your own admin access.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        if (!await _roleManager.RoleExistsAsync(AdminRole))
+            await _roleManager.CreateAsync(new IdentityRole(AdminRole));
+
+        if (await _userManager.IsInRoleAsync(user, AdminRole))
+        {
+            await _userManager.RemoveFromRoleAsync(user, AdminRole);
+            TempData["AdminMessage"] = $"{user.Email} is no longer a Super Admin.";
+        }
+        else
+        {
+            await _userManager.AddToRoleAsync(user, AdminRole);
+            TempData["AdminMessage"] = $"{user.Email} is now a Super Admin.";
+        }
+
+        return RedirectToAction(nameof(Users));
+    }
 }

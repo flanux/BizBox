@@ -1,0 +1,31 @@
+@model Bizbox.ViewModels.AdminBusinessTypeFormViewModel
+@{
+    var isEdit = Model.Id != 0;
+}
+
+<form method="post" asp-controller="Admin" asp-action="@(isEdit ? "BusinessTypeEdit" : "BusinessTypeCreate")" class="admin-form">
+    @Html.AntiForgeryToken()
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
+    <div asp-validation-summary="ModelOnly" class="error-message"></div>
+
+    <section class="admin-form-card">
+        <label asp-for="Name">Name
+            <input asp-for="Name" placeholder="e.g. Coffee Shop" />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </label>
+
+        <label asp-for="ShortDescription">Short description
+            <textarea asp-for="ShortDescription" rows="3" placeholder="Shown at the top of this category's catalog page"></textarea>
+            <span asp-validation-for="ShortDescription" class="field-error"></span>
+        </label>
+    </section>
+
+    <div class="admin-form-actions">
+        <a class="btn btn-secondary" asp-controller="Admin" asp-action="BusinessTypes">Cancel</a>
+        <button type="submit" class="btn">@(isEdit ? "Save Changes" : "Create Category")</button>
+    </div>
+</form>

@@ -1,0 +1,13 @@
+@{
+    var current = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool IsActive(params string[] actions) => actions.Contains(current);
+}
+
+<aside class="admin-sidebar">
+    <div class="admin-sidebar-title">Control Center</div>
+    <a class="admin-nav-link @(IsActive("Index") ? "active" : "")" asp-controller="Admin" asp-action="Index">Dashboard</a>
+    <a class="admin-nav-link @(IsActive("Products", "Create", "Edit") ? "active" : "")" asp-controller="Admin" asp-action="Products">Products</a>
+    <a class="admin-nav-link @(IsActive("BusinessTypes", "BusinessTypeCreate", "BusinessTypeEdit") ? "active" : "")" asp-controller="Admin" asp-action="BusinessTypes">Categories</a>
+    <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")" asp-controller="Admin" asp-action="Orders">Orders</a>
+    <a class="admin-nav-link @(IsActive("Users") ? "active" : "")" asp-controller="Admin" asp-action="Users">Users</a>
+</aside>

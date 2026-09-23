@@ -4,13 +4,7 @@
 }
 
 <div class="admin-shell">
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar-title">Control Center</div>
-        <a class="admin-nav-link active" asp-action="Index">Dashboard</a>
-        <a class="admin-nav-link" asp-action="Products">Products</a>
-        <a class="admin-nav-link" asp-action="Create">Add Product</a>
-        <a class="admin-nav-link" href="#system">System</a>
-    </aside>
+    <partial name="_Sidebar" />
 
     <section class="admin-main">
         <div class="page-header admin-page-header">
@@ -18,9 +12,9 @@
             <div class="admin-header-row">
                 <div>
                     <h1>Control Center</h1>
-                    <p>Manage the platform catalog and inspect the application's core data.</p>
+                    <p>Manage the full catalog, categories, orders, and accounts from one place.</p>
                 </div>
-                <a class="btn" asp-action="Create">+ Add Product</a>
+                <a class="btn" asp-controller="Admin" asp-action="Create">+ Add Product</a>
             </div>
         </div>
 
@@ -30,10 +24,18 @@
         }
 
         <div class="admin-stat-grid">
-            <div class="admin-stat"><span>Platform Products</span><strong>@Model.ProductCount</strong><small>@Model.ActiveProductCount active</small></div>
-            <div class="admin-stat"><span>Business Types</span><strong>@Model.BusinessTypeCount</strong><small>Catalog categories</small></div>
-            <div class="admin-stat"><span>Users</span><strong>@Model.UserCount</strong><small>Identity accounts</small></div>
-            <div class="admin-stat"><span>Orders</span><strong>@Model.OrderCount</strong><small>Rs. @Model.OrderValue.ToString("N0") total</small></div>
+            <a class="admin-stat" asp-controller="Admin" asp-action="Products" style="text-decoration:none;color:inherit;">
+                <span>Platform Products</span><strong>@Model.ProductCount</strong><small>@Model.ActiveProductCount active</small>
+            </a>
+            <a class="admin-stat" asp-controller="Admin" asp-action="BusinessTypes" style="text-decoration:none;color:inherit;">
+                <span>Categories</span><strong>@Model.BusinessTypeCount</strong><small>Business types</small>
+            </a>
+            <a class="admin-stat" asp-controller="Admin" asp-action="Users" style="text-decoration:none;color:inherit;">
+                <span>Users</span><strong>@Model.UserCount</strong><small>Registered accounts</small>
+            </a>
+            <a class="admin-stat" asp-controller="Admin" asp-action="Orders" style="text-decoration:none;color:inherit;">
+                <span>Orders</span><strong>@Model.OrderCount</strong><small>Rs. @Model.OrderValue.ToString("N0") total</small>
+            </a>
         </div>
 
         <div class="admin-section" id="system">
@@ -42,33 +44,40 @@
                     <span class="eyebrow">Catalog</span>
                     <h2>Recent products</h2>
                 </div>
-                <a class="btn btn-secondary btn-sm" asp-action="Products">Manage all</a>
+                <a class="btn btn-secondary btn-sm" asp-controller="Admin" asp-action="Products">Manage all</a>
             </div>
 
-            <div class="admin-product-list">
-                @foreach (var product in Model.RecentProducts)
-                {
-                    <div class="admin-product-row">
-                        <div class="admin-product-thumb">
-                            @if (!string.IsNullOrWhiteSpace(product.ImagePath))
-                            {
-                                <img src="@product.ImagePath" alt="@product.Name" />
-                            }
-                            else
-                            {
-                                <span>IMG</span>
-                            }
+            @if (!Model.RecentProducts.Any())
+            {
+                <div class="empty-state"><span class="icon">📦</span><p>No products yet. Add your first product to get started.</p></div>
+            }
+            else
+            {
+                <div class="admin-product-list">
+                    @foreach (var product in Model.RecentProducts)
+                    {
+                        <div class="admin-product-row">
+                            <div class="admin-product-thumb">
+                                @if (!string.IsNullOrWhiteSpace(product.ImagePath))
+                                {
+                                    <img src="@product.ImagePath" alt="@product.Name" />
+                                }
+                                else
+                                {
+                                    <span>IMG</span>
+                                }
+                            </div>
+                            <div class="admin-product-info">
+                                <strong>@product.Name</strong>
+                                <span>@product.Manufacturer · @product.BusinessType?.Name</span>
+                            </div>
+                            <div class="admin-product-price">Rs. @product.Price.ToString("N0")</div>
+                            <span class="pill @(product.IsActive ? "pill-new" : "pill-fair")">@(product.IsActive ? "Active" : "Inactive")</span>
+                            <a class="btn btn-secondary btn-sm" asp-controller="Admin" asp-action="Edit" asp-route-id="@product.Id">Edit</a>
                         </div>
-                        <div class="admin-product-info">
-                            <strong>@product.Name</strong>
-                            <span>@product.Manufacturer · @product.BusinessType?.Name</span>
-                        </div>
-                        <div class="admin-product-price">Rs. @product.Price.ToString("N0")</div>
-                        <span class="pill @(product.IsActive ? "pill-new" : "pill-fair")">@(product.IsActive ? "Active" : "Inactive")</span>
-                        <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@product.Id">Edit</a>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
         </div>
     </section>
 </div>

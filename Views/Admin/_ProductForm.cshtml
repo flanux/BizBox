@@ -3,7 +3,7 @@
     var isEdit = Model.Id != 0;
 }
 
-<form method="post" enctype="multipart/form-data" asp-action="@(isEdit ? "Edit" : "Create")" class="admin-form">
+<form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="@(isEdit ? "Edit" : "Create")" class="admin-form">
     @Html.AntiForgeryToken()
     @if (isEdit)
     {
@@ -101,7 +101,7 @@
     </section>
 
     <div class="admin-form-actions">
-        <a class="btn btn-secondary" asp-action="Products">Cancel</a>
+        <a class="btn btn-secondary" asp-controller="Admin" asp-action="Products">Cancel</a>
         <button type="submit" class="btn">@(isEdit ? "Save Changes" : "Create Product")</button>
     </div>
 </form>

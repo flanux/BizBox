@@ -1,0 +1,65 @@
+@model List<Bizbox.ViewModels.AdminBusinessTypeRowViewModel>
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="admin-shell">
+    <partial name="_Sidebar" />
+
+    <section class="admin-main">
+        <div class="page-header">
+            <span class="eyebrow">Catalog</span>
+            <div class="admin-header-row">
+                <div>
+                    <h1>Categories</h1>
+                    <p>Business types customers shop by — Coffee Shop, Bakery, and so on. Add as many as your catalog needs.</p>
+                </div>
+                <a class="btn" asp-controller="Admin" asp-action="BusinessTypeCreate">+ Add Category</a>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] is string message)
+        {
+            <div class="admin-alert">@message</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state"><span class="icon">🏷️</span><p>No categories yet. Add one to start building the catalog.</p></div>
+        }
+        else
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Products</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bt in Model)
+                        {
+                            <tr>
+                                <td><strong>@bt.Name</strong></td>
+                                <td>@bt.ShortDescription</td>
+                                <td>@bt.ProductCount</td>
+                                <td>
+                                    <div class="admin-actions">
+                                        <a class="btn btn-secondary btn-sm" asp-controller="Admin" asp-action="BusinessTypeEdit" asp-route-id="@bt.Id">Edit</a>
+                                        <form method="post" asp-controller="Admin" asp-action="BusinessTypeDelete" asp-route-id="@bt.Id" onsubmit="return confirm('Delete this category?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-secondary btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

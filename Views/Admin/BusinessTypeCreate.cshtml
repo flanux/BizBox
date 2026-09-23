@@ -1,0 +1,14 @@
+@model Bizbox.ViewModels.AdminBusinessTypeFormViewModel
+@{
+    ViewData["Title"] = "Add Category";
+}
+
+<div class="admin-form-shell">
+    <div class="page-header">
+        <span class="eyebrow">Catalog / New</span>
+        <h1>Add Category</h1>
+        <p>Create a new business type for customers to shop by.</p>
+    </div>
+
+    <partial name="_BusinessTypeForm" model="Model" />
+</div>

@@ -1,0 +1,82 @@
+@model List<Bizbox.Models.Order>
+@using Bizbox.Models
+@{
+    ViewData["Title"] = "Manage Orders";
+}
+
+<div class="admin-shell">
+    <partial name="_Sidebar" />
+
+    <section class="admin-main">
+        <div class="page-header">
+            <span class="eyebrow">Sales</span>
+            <div class="admin-header-row">
+                <div>
+                    <h1>Orders</h1>
+                    <p>Every order placed on the platform, newest first. Update status as orders move through fulfillment.</p>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] is string message)
+        {
+            <div class="admin-alert">@message</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state"><span class="icon">🧾</span><p>No orders yet.</p></div>
+        }
+        else
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Placed</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td>#@order.Id</td>
+                                <td>@(order.User?.Email ?? order.UserId)</td>
+                                <td>@order.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td>@order.Items.Sum(i => i.Quantity)</td>
+                                <td>Rs. @order.TotalAmount.ToString("N0")</td>
+                                <td>@order.PaymentMethod</td>
+                                <td>
+                                    <form method="post" asp-controller="Admin" asp-action="UpdateOrderStatus" class="admin-actions">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <select name="status">
+                                            @foreach (var status in Enum.GetValues<OrderStatus>())
+                                            {
+                                                if (status == order.Status)
+                                                {
+                                                    <option value="@status" selected>@status</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@status">@status</option>
+                                                }
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
