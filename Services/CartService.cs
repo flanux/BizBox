@@ -9,6 +9,7 @@ namespace Bizbox.Services;
 public interface ICartService
 {
     Task AddToCartAsync(string userId, int productId, int quantity = 1);
+    Task AddBundleToCartAsync(string userId, int bundleId);
     Task<List<CartItem>> GetCartAsync(string userId);
     Task RemoveFromCartAsync(string userId, int cartItemId);
     Task<decimal> GetCartTotalAsync(string userId);
@@ -39,6 +40,21 @@ public class CartService : ICartService
         }
 
         await _db.SaveChangesAsync();
+    }
+
+    public async Task AddBundleToCartAsync(string userId, int bundleId)
+    {
+        var bundle = await _db.ProductBundles
+            .Include(b => b.Items)
+            .FirstOrDefaultAsync(b => b.Id == bundleId && b.IsActive);
+
+        if (bundle == null)
+            return;
+
+        foreach (var item in bundle.Items)
+        {
+            await AddToCartAsync(userId, item.ProductId, item.Quantity);
+        }
     }
 
     public async Task<List<CartItem>> GetCartAsync(string userId)

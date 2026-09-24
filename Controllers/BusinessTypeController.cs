@@ -37,6 +37,14 @@ public class BusinessTypeController : Controller
             .OrderBy(p => p.SellerType) // platform (0) listings first, then resale (1)
             .ToList();
 
+        var bundles = await _db.ProductBundles
+            .AsNoTracking()
+            .Include(b => b.Items).ThenInclude(i => i.Product)
+            .Where(b => b.BusinessTypeId == id && b.IsActive)
+            .ToListAsync();
+
+        ViewBag.Bundles = bundles;
+
         return View(businessType);
     }
 
@@ -48,6 +56,19 @@ public class BusinessTypeController : Controller
         if (userId != null)
         {
             await _cartService.AddToCartAsync(userId, productId);
+        }
+        return RedirectToAction("Catalog", new { id = businessTypeId });
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> AddBundleToCart(int bundleId, int businessTypeId)
+    {
+        var userId = _userManager.GetUserId(User);
+        if (userId != null)
+        {
+            await _cartService.AddBundleToCartAsync(userId, bundleId);
+            TempData["CatalogMessage"] = "Bundle added to your cart.";
         }
         return RedirectToAction("Catalog", new { id = businessTypeId });
     }

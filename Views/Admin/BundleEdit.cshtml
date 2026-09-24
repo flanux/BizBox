@@ -1,0 +1,14 @@
+@model Bizbox.ViewModels.AdminBundleFormViewModel
+@{
+    ViewData["Title"] = "Edit Bundle";
+}
+
+<div class="admin-form-shell">
+    <div class="page-header">
+        <span class="eyebrow">Catalog / Edit</span>
+        <h1>Edit Bundle</h1>
+        <p>Update this bundle's contents, category, or visibility.</p>
+    </div>
+
+    <partial name="_BundleForm" model="Model" />
+</div>

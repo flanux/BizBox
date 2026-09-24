@@ -1,0 +1,118 @@
+@model Bizbox.ViewModels.AdminBundleFormViewModel
+@{
+    var isEdit = Model.Id != 0;
+    var groupedProducts = Model.AvailableProducts.GroupBy(p => p.BusinessTypeId);
+}
+
+<form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="@(isEdit ? "BundleEdit" : "BundleCreate")" class="admin-form">
+    @Html.AntiForgeryToken()
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
+    <div asp-validation-summary="ModelOnly" class="error-message"></div>
+
+    <div class="admin-form-grid">
+        <section class="admin-form-card">
+            <div class="admin-form-card-header">
+                <span class="eyebrow">Identity</span>
+                <h2>Bundle details</h2>
+            </div>
+
+            <label asp-for="Name">Name <span class="text-muted">(e.g. "Starter Cafe Kit", "Mahlkönig Full Setup")</span>
+                <input asp-for="Name" />
+                <span asp-validation-for="Name" class="field-error"></span>
+            </label>
+
+            <label asp-for="Description">Description
+                <textarea asp-for="Description" rows="4" placeholder="Who this bundle is for — a small single-room setup, a full enterprise operation, etc."></textarea>
+                <span asp-validation-for="Description" class="field-error"></span>
+            </label>
+
+            <label asp-for="BusinessTypeId">Business type
+                <select asp-for="BusinessTypeId">
+                    <option value="">-- choose --</option>
+                    @foreach (var bt in Model.BusinessTypes)
+                    {
+                        <option value="@bt.Id">@bt.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="BusinessTypeId" class="field-error"></span>
+            </label>
+
+            <label class="admin-checkbox">
+                <input asp-for="IsActive" />
+                <span>Visible in the public catalog</span>
+            </label>
+        </section>
+
+        <section class="admin-form-card">
+            <div class="admin-form-card-header">
+                <span class="eyebrow">Contents</span>
+                <h2>Products in this bundle</h2>
+                <p class="text-muted">Price shown to customers is always the live total of what's checked here.</p>
+            </div>
+
+            <span asp-validation-for="SelectedProductIds" class="field-error"></span>
+
+            @if (!Model.AvailableProducts.Any())
+            {
+                <p class="text-muted">No active products yet — add products first, then come back to build a bundle.</p>
+            }
+            else
+            {
+                <div class="admin-bundle-picker">
+                    @foreach (var group in groupedProducts)
+                    {
+                        var groupName = group.First().BusinessType?.Name ?? "Other";
+                        <div class="admin-bundle-picker-group">
+                            <h3>@groupName</h3>
+                            @foreach (var p in group)
+                            {
+                                var isChecked = Model.SelectedProductIds.Contains(p.Id);
+                                <label class="admin-checkbox admin-bundle-picker-item">
+                                    @if (isChecked)
+                                    {
+                                        <input type="checkbox" name="SelectedProductIds" value="@p.Id" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" name="SelectedProductIds" value="@p.Id" />
+                                    }
+                                    <span>@p.Name <small class="text-muted">— Rs. @p.Price.ToString("N0")</small></span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <section class="admin-form-card admin-media-card">
+        <div>
+            <span class="eyebrow">Media</span>
+            <h2>Bundle image</h2>
+            <p class="text-muted">JPG, JPEG, PNG, or WEBP. Maximum 5 MB. Optional — falls back to a generic icon if left blank.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
+        {
+            <div class="admin-current-image">
+                <img src="@Model.ExistingImagePath" alt="Current bundle image" />
+                <span>Current image</span>
+            </div>
+        }
+
+        <label asp-for="Image">Upload image
+            <input asp-for="Image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+            <span asp-validation-for="Image" class="field-error"></span>
+        </label>
+    </section>
+
+    <div class="admin-form-actions">
+        <a class="btn btn-secondary" asp-controller="Admin" asp-action="Bundles">Cancel</a>
+        <button type="submit" class="btn">@(isEdit ? "Save Changes" : "Create Bundle")</button>
+    </div>
+</form>

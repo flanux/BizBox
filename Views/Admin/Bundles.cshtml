@@ -1,0 +1,73 @@
+@model List<Bizbox.ViewModels.AdminBundleRowViewModel>
+@{
+    ViewData["Title"] = "Manage Bundles";
+}
+
+<div class="admin-shell">
+    <partial name="_Sidebar" />
+
+    <section class="admin-main">
+        <div class="page-header">
+            <span class="eyebrow">Catalog</span>
+            <div class="admin-header-row">
+                <div>
+                    <h1>Bundles</h1>
+                    <p>Curated equipment sets — a "Starter Kit", a full "Enterprise Setup", or a single-manufacturer lineup. Price is always the live sum of what's inside.</p>
+                </div>
+                <a class="btn" asp-controller="Admin" asp-action="BundleCreate">+ Add Bundle</a>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] is string message)
+        {
+            <div class="admin-alert">@message</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state"><span class="icon">📦</span><p>No bundles yet. Group a few products together to help customers kit out their whole business in one purchase.</p></div>
+        }
+        else
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Bundle</th>
+                            <th>Category</th>
+                            <th>Items</th>
+                            <th>Total Price</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in Model)
+                        {
+                            <tr>
+                                <td><strong>@b.Name</strong></td>
+                                <td>@b.BusinessTypeName</td>
+                                <td>@b.ItemCount item@(b.ItemCount == 1 ? "" : "s")</td>
+                                <td>Rs. @b.TotalPrice.ToString("N0")</td>
+                                <td><span class="pill @(b.IsActive ? "pill-new" : "pill-fair")">@(b.IsActive ? "Active" : "Inactive")</span></td>
+                                <td>
+                                    <div class="admin-actions">
+                                        <a class="btn btn-secondary btn-sm" asp-controller="Admin" asp-action="BundleEdit" asp-route-id="@b.Id">Edit</a>
+                                        <form method="post" asp-controller="Admin" asp-action="BundleToggleActive" asp-route-id="@b.Id">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-secondary btn-sm">@(b.IsActive ? "Disable" : "Enable")</button>
+                                        </form>
+                                        <form method="post" asp-controller="Admin" asp-action="BundleDelete" asp-route-id="@b.Id" onsubmit="return confirm('Delete this bundle?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-secondary btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

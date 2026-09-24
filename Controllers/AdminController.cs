@@ -43,14 +43,18 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Index()
     {
+        // SQLite's EF Core provider can't translate Sum() over a decimal column to SQL,
+        // so pull the amounts into memory first and sum them in C#.
+        var orderTotals = await _db.Orders.Select(o => o.TotalAmount).ToListAsync();
+
         var model = new AdminDashboardViewModel
         {
             ProductCount = await _db.Products.CountAsync(p => p.SellerType == ListingSellerType.Platform),
             ActiveProductCount = await _db.Products.CountAsync(p => p.SellerType == ListingSellerType.Platform && p.IsActive),
             BusinessTypeCount = await _db.BusinessTypes.CountAsync(),
             UserCount = await _db.Users.CountAsync(),
-            OrderCount = await _db.Orders.CountAsync(),
-            OrderValue = await _db.Orders.SumAsync(o => (decimal?)o.TotalAmount) ?? 0m,
+            OrderCount = orderTotals.Count,
+            OrderValue = orderTotals.Sum(),
             RecentProducts = await _db.Products
                 .AsNoTracking()
                 .Include(p => p.BusinessType)
@@ -222,11 +226,12 @@ public class AdminController : Controller
 
         var isReferenced = await _db.Products.AnyAsync(p => p.SupersedesProductId == id)
             || await _db.OrderItems.AnyAsync(oi => oi.ProductId == id)
-            || await _db.CartItems.AnyAsync(ci => ci.ProductId == id);
+            || await _db.CartItems.AnyAsync(ci => ci.ProductId == id)
+            || await _db.BundleItems.AnyAsync(bi => bi.ProductId == id);
 
         if (isReferenced)
         {
-            TempData["AdminMessage"] = $"'{product.Name}' is referenced by an order, cart, or another product, so it was deactivated instead of deleted.";
+            TempData["AdminMessage"] = $"'{product.Name}' is referenced by an order, cart, bundle, or another product, so it was deactivated instead of deleted.";
             product.IsActive = false;
             await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Products));
@@ -255,7 +260,7 @@ public class AdminController : Controller
             .ToListAsync();
     }
 
-    private async Task<string?> SaveImageAsync(IFormFile? image)
+    private async Task<string?> SaveImageAsync(IFormFile? image, string subfolder = "products")
     {
         if (image == null || image.Length == 0)
             return null;
@@ -273,7 +278,7 @@ public class AdminController : Controller
             return null;
         }
 
-        var uploadDirectory = Path.Combine(_environment.WebRootPath, "uploads", "products");
+        var uploadDirectory = Path.Combine(_environment.WebRootPath, "uploads", subfolder);
         Directory.CreateDirectory(uploadDirectory);
 
         var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
@@ -282,12 +287,12 @@ public class AdminController : Controller
         await using var stream = System.IO.File.Create(filePath);
         await image.CopyToAsync(stream);
 
-        return $"/uploads/products/{fileName}";
+        return $"/uploads/{subfolder}/{fileName}";
     }
 
     private void DeleteLocalImage(string? imagePath)
     {
-        if (string.IsNullOrWhiteSpace(imagePath) || !imagePath.StartsWith("/uploads/products/", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(imagePath) || !imagePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
             return;
 
         try
@@ -399,9 +404,10 @@ public class AdminController : Controller
             return NotFound();
 
         var hasProducts = await _db.Products.AnyAsync(p => p.BusinessTypeId == id);
-        if (hasProducts)
+        var hasBundles = await _db.ProductBundles.AnyAsync(pb => pb.BusinessTypeId == id);
+        if (hasProducts || hasBundles)
         {
-            TempData["AdminMessage"] = $"'{businessType.Name}' still has products assigned to it, so it can't be deleted. Move or remove those products first.";
+            TempData["AdminMessage"] = $"'{businessType.Name}' still has products or bundles assigned to it, so it can't be deleted. Move or remove those first.";
             return RedirectToAction(nameof(BusinessTypes));
         }
 
@@ -498,5 +504,203 @@ public class AdminController : Controller
         }
 
         return RedirectToAction(nameof(Users));
+    }
+
+    // ================= Bundles =================
+
+    public async Task<IActionResult> Bundles()
+    {
+        var bundles = await _db.ProductBundles
+            .AsNoTracking()
+            .Include(b => b.BusinessType)
+            .Include(b => b.Items).ThenInclude(i => i.Product)
+            .OrderBy(b => b.BusinessType!.Name)
+            .ThenBy(b => b.Name)
+            .ToListAsync();
+
+        var rows = bundles.Select(b => new AdminBundleRowViewModel
+        {
+            Id = b.Id,
+            Name = b.Name,
+            BusinessTypeName = b.BusinessType?.Name ?? "—",
+            ItemCount = b.Items.Count,
+            TotalPrice = b.Items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity),
+            IsActive = b.IsActive
+        }).ToList();
+
+        return View(rows);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BundleCreate()
+    {
+        var model = new AdminBundleFormViewModel();
+        await PopulateBundleFormAsync(model);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BundleCreate(AdminBundleFormViewModel model)
+    {
+        await PopulateBundleFormAsync(model);
+
+        if (model.SelectedProductIds.Count == 0)
+            ModelState.AddModelError(nameof(AdminBundleFormViewModel.SelectedProductIds), "Pick at least one product for the bundle.");
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var imagePath = await SaveImageAsync(model.Image, "bundles");
+        if (model.Image != null && imagePath == null)
+            return View(model);
+
+        var bundle = new ProductBundle
+        {
+            Name = model.Name.Trim(),
+            Description = model.Description?.Trim() ?? string.Empty,
+            BusinessTypeId = model.BusinessTypeId,
+            ImagePath = imagePath,
+            IsActive = model.IsActive,
+            Items = model.SelectedProductIds
+                .Distinct()
+                .Select(pid => new BundleItem { ProductId = pid, Quantity = 1 })
+                .ToList()
+        };
+
+        _db.ProductBundles.Add(bundle);
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Bundle '{bundle.Name}' created.";
+        return RedirectToAction(nameof(Bundles));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BundleEdit(int id)
+    {
+        var bundle = await _db.ProductBundles
+            .Include(b => b.Items)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (bundle == null)
+            return NotFound();
+
+        var model = new AdminBundleFormViewModel
+        {
+            Id = bundle.Id,
+            Name = bundle.Name,
+            Description = bundle.Description,
+            BusinessTypeId = bundle.BusinessTypeId,
+            IsActive = bundle.IsActive,
+            ExistingImagePath = bundle.ImagePath,
+            SelectedProductIds = bundle.Items.Select(i => i.ProductId).ToList()
+        };
+
+        await PopulateBundleFormAsync(model);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BundleEdit(int id, AdminBundleFormViewModel model)
+    {
+        if (id != model.Id)
+            return BadRequest();
+
+        var bundle = await _db.ProductBundles
+            .Include(b => b.Items)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (bundle == null)
+            return NotFound();
+
+        await PopulateBundleFormAsync(model);
+        model.ExistingImagePath = bundle.ImagePath;
+
+        if (model.SelectedProductIds.Count == 0)
+            ModelState.AddModelError(nameof(AdminBundleFormViewModel.SelectedProductIds), "Pick at least one product for the bundle.");
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var oldImagePath = bundle.ImagePath;
+        var newImagePath = await SaveImageAsync(model.Image, "bundles");
+        if (model.Image != null && newImagePath == null)
+            return View(model);
+
+        bundle.Name = model.Name.Trim();
+        bundle.Description = model.Description?.Trim() ?? string.Empty;
+        bundle.BusinessTypeId = model.BusinessTypeId;
+        bundle.IsActive = model.IsActive;
+
+        if (newImagePath != null)
+            bundle.ImagePath = newImagePath;
+
+        // Replace the item set wholesale — simplest correct way to sync a
+        // checkbox list back onto a join table.
+        _db.BundleItems.RemoveRange(bundle.Items);
+        bundle.Items = model.SelectedProductIds
+            .Distinct()
+            .Select(pid => new BundleItem { ProductId = pid, Quantity = 1 })
+            .ToList();
+
+        await _db.SaveChangesAsync();
+
+        if (newImagePath != null)
+            DeleteLocalImage(oldImagePath);
+
+        TempData["AdminMessage"] = $"Bundle '{bundle.Name}' updated.";
+        return RedirectToAction(nameof(Bundles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BundleToggleActive(int id)
+    {
+        var bundle = await _db.ProductBundles.FindAsync(id);
+        if (bundle == null)
+            return NotFound();
+
+        bundle.IsActive = !bundle.IsActive;
+        await _db.SaveChangesAsync();
+
+        TempData["AdminMessage"] = $"Bundle '{bundle.Name}' is now {(bundle.IsActive ? "active" : "inactive")}.";
+        return RedirectToAction(nameof(Bundles));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BundleDelete(int id)
+    {
+        var bundle = await _db.ProductBundles
+            .Include(b => b.Items)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (bundle == null)
+            return NotFound();
+
+        var imagePath = bundle.ImagePath;
+        _db.ProductBundles.Remove(bundle); // cascades to BundleItems
+        await _db.SaveChangesAsync();
+        DeleteLocalImage(imagePath);
+
+        TempData["AdminMessage"] = $"Bundle '{bundle.Name}' deleted.";
+        return RedirectToAction(nameof(Bundles));
+    }
+
+    private async Task PopulateBundleFormAsync(AdminBundleFormViewModel model)
+    {
+        model.BusinessTypes = await _db.BusinessTypes
+            .AsNoTracking()
+            .OrderBy(bt => bt.Name)
+            .ToListAsync();
+
+        model.AvailableProducts = await _db.Products
+            .AsNoTracking()
+            .Include(p => p.BusinessType)
+            .Where(p => p.SellerType == ListingSellerType.Platform && p.IsActive)
+            .OrderBy(p => p.BusinessTypeId)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
     }
 }

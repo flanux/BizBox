@@ -1,0 +1,14 @@
+@model Bizbox.ViewModels.AdminBundleFormViewModel
+@{
+    ViewData["Title"] = "Add Bundle";
+}
+
+<div class="admin-form-shell">
+    <div class="page-header">
+        <span class="eyebrow">Catalog / New</span>
+        <h1>Add Bundle</h1>
+        <p>Group existing products into a kit customers can add to their cart in one click.</p>
+    </div>
+
+    <partial name="_BundleForm" model="Model" />
+</div>

@@ -1,7 +1,9 @@
 @using Bizbox.Helpers
+@using Bizbox.Models
 @model BusinessType
 @{
     ViewData["Title"] = Model.Name + " Catalog";
+    var bundles = ViewBag.Bundles as List<ProductBundle> ?? new List<ProductBundle>();
 }
 
 <div class="page-header">
@@ -9,6 +11,90 @@
     <h1>@IconHelper.GetBusinessIcon(Model.Name) @Model.Name</h1>
     <p>@Model.ShortDescription New equipment and resale listings for this business type, together in one list.</p>
 </div>
+
+@if (TempData["CatalogMessage"] is string catalogMessage)
+{
+    <div class="admin-alert">@catalogMessage</div>
+}
+
+@if (bundles.Any())
+{
+    <div class="page-header" style="margin-top: var(--space-6);">
+        <span class="eyebrow">Kits</span>
+        <h2>Equipment bundles</h2>
+        <p>Scaled for how big the operation is — pick the one that matches, or build your own below.</p>
+    </div>
+
+    <div class="bundle-grid">
+        @foreach (var bundle in bundles)
+        {
+            var bundleTotal = bundle.Items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity);
+            var manufacturers = bundle.Items
+                .Select(i => i.Product?.Manufacturer)
+                .Where(m => !string.IsNullOrWhiteSpace(m))
+                .Distinct()
+                .ToList();
+
+            <div class="bundle-card">
+                <div class="bundle-card-media">
+                    @if (!string.IsNullOrWhiteSpace(bundle.ImagePath))
+                    {
+                        <img src="@bundle.ImagePath" alt="@bundle.Name" style="width:100%;height:100%;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        @IconHelper.GetBusinessIcon(Model.Name)
+                    }
+                </div>
+                <div class="bundle-card-body">
+                    <div class="bundle-card-title">@bundle.Name</div>
+                    @if (manufacturers.Count == 1)
+                    {
+                        <div class="hcard-manufacturer">All @manufacturers[0]</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(bundle.Description))
+                    {
+                        <p class="hcard-desc">@bundle.Description</p>
+                    }
+
+                    <details class="bundle-contents">
+                        <summary>@bundle.Items.Count item@(bundle.Items.Count == 1 ? "" : "s") included</summary>
+                        <ul>
+                            @foreach (var item in bundle.Items)
+                            {
+                                <li>@(item.Quantity)&times; @item.Product?.Name</li>
+                            }
+                        </ul>
+                    </details>
+
+                    <div class="hcard-bottom">
+                        <span class="hcard-price">Rs. @bundleTotal.ToString("N0")</span>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form method="post" asp-action="AddBundleToCart" asp-controller="BusinessType">
+                                <input type="hidden" name="bundleId" value="@bundle.Id" />
+                                <input type="hidden" name="businessTypeId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm">Add Bundle to Cart</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-sm" asp-area="Identity" asp-page="/Account/Login"
+                               asp-route-returnUrl="@Url.Action("Catalog", "BusinessType", new { id = Model.Id })">
+                               Login to buy
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="page-header" style="margin-top: var(--space-6);">
+        <span class="eyebrow">Individually</span>
+        <h2>Or build your own</h2>
+    </div>
+}
 
 @if (!Model.Products.Any())
 {

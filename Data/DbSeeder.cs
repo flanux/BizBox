@@ -12,8 +12,14 @@ public static class DbSeeder
 {
     public static void Seed(ApplicationDbContext db)
     {
-        if (db.BusinessTypes.Any()) return; // already seeded
+        if (!db.BusinessTypes.Any())
+            SeedCatalog(db);
 
+        SeedBundles(db);
+    }
+
+    private static void SeedCatalog(ApplicationDbContext db)
+    {
         var coffee = new BusinessType { Name = "Coffee Shop", ShortDescription = "Everything to open a small coffee shop." };
         var bakery = new BusinessType { Name = "Bakery", ShortDescription = "Everything to open a small bakery." };
         var restaurant = new BusinessType { Name = "Restaurant", ShortDescription = "Everything to open a small restaurant." };
@@ -113,6 +119,54 @@ public static class DbSeeder
             SupersedesProductId = oldGrinder.Id
         };
         db.Products.Add(newGrinder);
+        db.SaveChanges();
+    }
+
+    // Runs independently of SeedCatalog's guard, so it also fills in bundles
+    // for anyone who already has products (e.g. an existing dev DB) — as
+    // long as no bundles exist yet. Picks tiers from whatever products
+    // actually exist per business type rather than hardcoding names, so it
+    // stays correct even after products are renamed/added via the admin.
+    private static void SeedBundles(ApplicationDbContext db)
+    {
+        if (db.ProductBundles.Any()) return;
+
+        var businessTypes = db.BusinessTypes.ToList();
+
+        foreach (var bt in businessTypes)
+        {
+            var products = db.Products
+                .Where(p => p.BusinessTypeId == bt.Id && p.SellerType == ListingSellerType.Platform && p.IsActive)
+                .OrderBy(p => p.Price)
+                .ToList();
+
+            if (products.Count < 2) continue;
+
+            var starterCount = Math.Max(2, products.Count / 2);
+            var starterItems = products.Take(starterCount).ToList();
+
+            db.ProductBundles.Add(new ProductBundle
+            {
+                Name = $"Starter {bt.Name} Kit",
+                Description = $"The essentials to open a small, single-room {bt.Name.ToLowerInvariant()} — lower-cost equipment to get running without overcommitting.",
+                BusinessTypeId = bt.Id,
+                IsActive = true,
+                Items = starterItems.Select(p => new BundleItem { ProductId = p.Id, Quantity = 1 }).ToList()
+            });
+
+            if (products.Count >= 3)
+            {
+                db.ProductBundles.Add(new ProductBundle
+                {
+                    Name = $"Enterprise {bt.Name} Setup",
+                    Description = $"A full, higher-capacity setup for a larger {bt.Name.ToLowerInvariant()} handling more volume and guests.",
+                    BusinessTypeId = bt.Id,
+                    IsActive = true,
+                    Items = products.Select(p => new BundleItem { ProductId = p.Id, Quantity = 1 }).ToList()
+                });
+            }
+        }
+
         db.SaveChanges();
     }
 

@@ -14,6 +14,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<ProductBundle> ProductBundles => Set<ProductBundle>();
+    public DbSet<BundleItem> BundleItems => Set<BundleItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -31,5 +33,25 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(bt => bt.Products)
             .HasForeignKey(p => p.BusinessTypeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Deleting a bundle takes its line items with it...
+        builder.Entity<BundleItem>()
+            .HasOne(bi => bi.ProductBundle)
+            .WithMany(pb => pb.Items)
+            .HasForeignKey(bi => bi.ProductBundleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ...but a product referenced by a bundle can't be hard-deleted out from under it.
+        builder.Entity<BundleItem>()
+            .HasOne(bi => bi.Product)
+            .WithMany()
+            .HasForeignKey(bi => bi.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProductBundle>()
+            .HasOne(pb => pb.BusinessType)
+            .WithMany()
+            .HasForeignKey(pb => pb.BusinessTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
