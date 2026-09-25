@@ -7,14 +7,16 @@
     string? term = ViewBag.SearchTerm;
     var teaserBundles = (List<ProductBundle>?)ViewBag.TeaserBundles ?? new List<ProductBundle>();
 
-    var smallBiz = businessTypes.Where(bt => bt.Segment == BusinessSegment.SmallBusiness).ToList();
-    var bigBiz = businessTypes.Where(bt => bt.Segment == BusinessSegment.BigBusiness).ToList();
+    // Small vs big is already expressed inside each category via its Starter
+    // vs Enterprise bundle — no need for a separate top-level tab for it.
+    // Just two paths here: Business (small + big together) and Hobbyist.
+    var business = businessTypes.Where(bt => bt.Segment != BusinessSegment.Hobbyist).ToList();
     var hobbyist = businessTypes.Where(bt => bt.Segment == BusinessSegment.Hobbyist).ToList();
 }
 
 <section class="hero">
     <h1>Pick your path. Get equipped.</h1>
-    <p class="subtitle">Starting a small business, running a bigger operation, or just chasing a hobby seriously — curated equipment for all three, or search for something specific.</p>
+    <p class="subtitle">Starting or running a business, or just chasing a hobby seriously — curated equipment for both, or search for something specific.</p>
 
     <form method="get" asp-action="Index" asp-controller="Home" class="filter-bar" style="margin-top: var(--space-4);">
         <input type="text" name="q" value="@term" placeholder="Search equipment..." />
@@ -60,7 +62,7 @@
 }
 else
 {
-    @* ---- One-tap category strip: every category, horizontally scrollable ---- *@
+    @* ---- One-tap category strip: every category, wraps onto multiple lines ---- *@
     <div class="category-strip">
         @foreach (var bt in businessTypes)
         {
@@ -70,43 +72,26 @@ else
         }
     </div>
 
-    @* ---- Segment tabs (pure CSS, no JS) + a grid per segment ---- *@
+    @* ---- Path tabs (pure CSS, no JS) + a grid per path ---- *@
     <div class="segment-tabs">
-        <input type="radio" name="segment" id="seg-small" class="segment-tab-input" checked />
-        <input type="radio" name="segment" id="seg-big" class="segment-tab-input" />
+        <input type="radio" name="segment" id="seg-business" class="segment-tab-input" checked />
         <input type="radio" name="segment" id="seg-hobby" class="segment-tab-input" />
 
         <div class="segment-tab-strip">
-            <label for="seg-small" class="segment-tab-label">Small Business</label>
-            <label for="seg-big" class="segment-tab-label">Big Business</label>
+            <label for="seg-business" class="segment-tab-label">Business</label>
             <label for="seg-hobby" class="segment-tab-label">Hobbyist</label>
         </div>
 
-        <div class="segment-panel" data-panel="small">
-            <p class="text-muted">Solo or small-team operations — a shop, a stall, a home-based business.</p>
+        <div class="segment-panel" data-panel="business">
+            <p class="text-muted">Every business category — each one offers a Starter Kit and an Enterprise Setup, so pick the category first and scale up or down inside it.</p>
             <div class="category-grid">
-                @foreach (var bt in smallBiz)
+                @foreach (var bt in business)
                 {
                     <a class="category-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
                         <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
                         <span class="category-card-name">@bt.Name</span>
                         <span class="category-card-desc">@bt.ShortDescription</span>
-                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
-                    </a>
-                }
-            </div>
-        </div>
-
-        <div class="segment-panel" data-panel="big">
-            <p class="text-muted">A bigger operation with a team behind it — more volume, more equipment.</p>
-            <div class="category-grid">
-                @foreach (var bt in bigBiz)
-                {
-                    <a class="category-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
-                        <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
-                        <span class="category-card-name">@bt.Name</span>
-                        <span class="category-card-desc">@bt.ShortDescription</span>
-                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
+                        <span class="category-card-count">@bt.Products.Count item@(bt.Products.Count == 1 ? "" : "s")</span>
                     </a>
                 }
             </div>
@@ -121,7 +106,7 @@ else
                         <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
                         <span class="category-card-name">@bt.Name</span>
                         <span class="category-card-desc">@bt.ShortDescription</span>
-                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
+                        <span class="category-card-count">@bt.Products.Count item@(bt.Products.Count == 1 ? "" : "s")</span>
                     </a>
                 }
             </div>
@@ -135,7 +120,7 @@ else
             <h2>Bundles worth a look</h2>
         </div>
 
-        <div class="bundle-row">
+        <div class="bundle-teaser-grid">
             @foreach (var bundle in teaserBundles)
             {
                 var bundleTotal = bundle.Items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity);
