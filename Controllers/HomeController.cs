@@ -14,33 +14,49 @@ public class HomeController : Controller
         _db = db;
     }
 
-    // Default: show a mini-grid of a few products under each business type,
-    // right on the home page, so a first-time visitor sees real equipment
-    // and prices without an extra click.
+    // Discovery homepage: a segment picker (Small Business / Big Business /
+    // Hobbyist) up top, a category grid per segment, and a short "Popular
+    // bundles" teaser row. Search bypasses all of that and shows a flat
+    // results grid instead.
     public async Task<IActionResult> Index(string? q)
     {
-        var businessTypes = await _db.BusinessTypes.ToListAsync();
-
-        var allProducts = await _db.Products
-            .Include(p => p.BusinessType)
-            .Where(p => p.IsActive && p.SellerType == ListingSellerType.Platform)
-            .Where(p => string.IsNullOrEmpty(q) || p.Name.Contains(q) || p.Description.Contains(q))
-            .OrderBy(p => p.BusinessTypeId).ThenBy(p => p.Name)
+        var businessTypes = await _db.BusinessTypes
+            .Include(bt => bt.Products.Where(p => p.IsActive))
+            .OrderBy(bt => bt.Name)
             .ToListAsync();
 
-        // Group products by business type for the per-category mini-grids.
-        var byCategory = businessTypes.ToDictionary(
-            bt => bt.Id,
-            bt => allProducts.Where(p => p.BusinessTypeId == bt.Id).Take(4).ToList()
-        );
-
         ViewBag.BusinessTypes = businessTypes;
-        ViewBag.ProductsByCategory = byCategory;
         ViewBag.SearchTerm = q;
 
-        // If searching, also return a flat filtered list so results aren't
-        // hidden inside per-category groups of only 4.
-        ViewBag.SearchResults = string.IsNullOrWhiteSpace(q) ? null : allProducts;
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var results = await _db.Products
+                .Include(p => p.BusinessType)
+                .Where(p => p.IsActive && p.SellerType == ListingSellerType.Platform)
+                .Where(p => p.Name.Contains(q) || p.Description.Contains(q))
+                .OrderBy(p => p.BusinessTypeId).ThenBy(p => p.Name)
+                .ToListAsync();
+
+            ViewBag.SearchResults = results;
+            return View();
+        }
+
+        ViewBag.SearchResults = null;
+
+        // A handful of bundles across every category for the homepage teaser
+        // row — cheapest few items in memory, not a full browse experience;
+        // "see all" on each category page covers the rest.
+        var teaserBundles = await _db.ProductBundles
+            .AsNoTracking()
+            .Include(b => b.BusinessType)
+            .Include(b => b.Items).ThenInclude(i => i.Product)
+            .Where(b => b.IsActive)
+            .ToListAsync();
+
+        ViewBag.TeaserBundles = teaserBundles
+            .OrderBy(b => b.Items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity))
+            .Take(8)
+            .ToList();
 
         return View();
     }

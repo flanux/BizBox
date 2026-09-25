@@ -300,3 +300,82 @@ code { background: #eeede7; padding: .1rem .3rem; border-radius: 4px; font-size:
 .admin-bundle-picker-group { margin-bottom: var(--space-3); }
 .admin-bundle-picker-group h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
 .admin-bundle-picker-item { padding: var(--space-1) 0; }
+
+/* ===== Homepage: one-tap category strip ===== */
+.category-strip {
+    display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) 0 var(--space-4);
+    margin-bottom: var(--space-2); scrollbar-width: thin;
+}
+.category-chip {
+    display: flex; align-items: center; gap: 6px; flex: 0 0 auto; white-space: nowrap;
+    padding: 0.45rem 0.9rem; border-radius: 999px; border: 1.5px solid var(--color-border);
+    font-size: 0.82rem; font-weight: 600; color: var(--color-ink); background: var(--color-surface);
+    text-decoration: none; transition: border-color 0.12s ease, background 0.12s ease;
+}
+.category-chip:hover { border-color: var(--color-primary); background: #f3f2ec; text-decoration: none; }
+
+/* ===== Homepage: segment tabs (pure CSS — radio + label + sibling selector) ===== */
+.segment-tabs { margin-top: var(--space-2); position: relative; }
+.segment-tab-input { position: absolute; left: -9999px; opacity: 0; }
+.segment-tab-strip { display: flex; gap: var(--space-2); border-bottom: 1.5px solid var(--color-border); margin-bottom: var(--space-5); }
+.segment-tab-label {
+    cursor: pointer; padding: var(--space-3) var(--space-2); font-weight: 700; font-size: 0.95rem;
+    color: var(--color-text-muted); border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
+    transition: color 0.12s ease, border-color 0.12s ease;
+}
+.segment-tab-label:hover { color: var(--color-ink); }
+.segment-panel { display: none; }
+#seg-small:checked ~ .segment-tab-strip label[for="seg-small"],
+#seg-big:checked ~ .segment-tab-strip label[for="seg-big"],
+#seg-hobby:checked ~ .segment-tab-strip label[for="seg-hobby"] {
+    color: var(--color-primary); border-bottom-color: var(--color-primary);
+}
+#seg-small:checked ~ .segment-panel[data-panel="small"],
+#seg-big:checked ~ .segment-panel[data-panel="big"],
+#seg-hobby:checked ~ .segment-panel[data-panel="hobby"] { display: block; }
+
+/* ===== Homepage: category grid (the main scan-and-compare surface) ===== */
+.category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-3); }
+.category-card {
+    display: flex; flex-direction: column; gap: 4px; padding: var(--space-4);
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    text-decoration: none; color: inherit; transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.category-card:hover { box-shadow: var(--shadow-md); border-color: #d3d0c5; text-decoration: none; }
+.category-card-icon { font-size: 1.8rem; margin-bottom: var(--space-1); }
+.category-card-name { font-weight: 800; font-size: 0.95rem; }
+.category-card-desc { font-size: 0.78rem; color: var(--color-text-muted); flex: 1; }
+.category-card-count { font-size: 0.72rem; font-weight: 700; color: var(--color-primary); margin-top: var(--space-1); }
+
+/* ===== Homepage: bundle teaser row (short, horizontal — not the main browsing surface) ===== */
+.bundle-row { display: flex; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-2); scrollbar-width: thin; }
+.bundle-row-card {
+    flex: 0 0 180px; display: flex; flex-direction: column; text-decoration: none; color: inherit;
+    background: var(--color-surface); border: 1.5px solid var(--color-primary); border-radius: var(--radius-md); overflow: hidden;
+}
+.bundle-row-card:hover { box-shadow: var(--shadow-md); text-decoration: none; }
+.bundle-row-media { height: 90px; display: flex; align-items: center; justify-content: center; background: #eeede7; font-size: 1.8rem; }
+.bundle-row-name { font-size: 0.82rem; font-weight: 700; padding: var(--space-2) var(--space-3) 0; }
+.bundle-row-price { font-size: 0.82rem; font-weight: 800; color: var(--color-primary); padding: 2px var(--space-3) var(--space-3); }
+
+/* ===== Product detail page: image left, info right ===== */
+.breadcrumb { font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: var(--space-4); }
+.breadcrumb a { color: var(--color-text-muted); }
+.breadcrumb span:last-child { color: var(--color-ink); font-weight: 600; }
+.product-detail { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: var(--space-6); align-items: start; }
+.product-detail-media {
+    position: relative; aspect-ratio: 1 / 1; border-radius: var(--radius-md); overflow: hidden;
+    background: #eeede7; display: flex; align-items: center; justify-content: center;
+}
+.product-detail-media img { width: 100%; height: 100%; object-fit: cover; }
+.product-detail-icon { font-size: 5rem; }
+.product-detail-media .pill { position: absolute; top: var(--space-3); left: var(--space-3); }
+.product-detail-info h1 { font-size: 1.6rem; margin: 4px 0 var(--space-3); }
+.product-detail-info h2 { font-size: 1rem; margin: var(--space-4) 0 var(--space-2); }
+.product-detail-desc { color: var(--color-text-muted); line-height: 1.6; }
+.product-detail-specs { padding-left: var(--space-4); color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.8; }
+.product-detail-buybar { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.product-detail-price { font-size: 1.4rem; font-weight: 800; }
+@media (max-width: 720px) {
+    .product-detail { grid-template-columns: 1fr; }
+}

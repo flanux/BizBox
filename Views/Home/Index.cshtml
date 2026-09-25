@@ -3,14 +3,18 @@
 @{
     ViewData["Title"] = "Home";
     var businessTypes = (List<BusinessType>)ViewBag.BusinessTypes;
-    var byCategory = (Dictionary<int, List<Product>>)ViewBag.ProductsByCategory;
     var searchResults = (List<Product>?)ViewBag.SearchResults;
     string? term = ViewBag.SearchTerm;
+    var teaserBundles = (List<ProductBundle>?)ViewBag.TeaserBundles ?? new List<ProductBundle>();
+
+    var smallBiz = businessTypes.Where(bt => bt.Segment == BusinessSegment.SmallBusiness).ToList();
+    var bigBiz = businessTypes.Where(bt => bt.Segment == BusinessSegment.BigBusiness).ToList();
+    var hobbyist = businessTypes.Where(bt => bt.Segment == BusinessSegment.Hobbyist).ToList();
 }
 
 <section class="hero">
-    <h1>Pick your business type. Get equipped.</h1>
-    <p class="subtitle">Curated equipment for coffee shops, bakeries, restaurants, and salons — browse below, or search for something specific.</p>
+    <h1>Pick your path. Get equipped.</h1>
+    <p class="subtitle">Starting a small business, running a bigger operation, or just chasing a hobby seriously — curated equipment for all three, or search for something specific.</p>
 
     <form method="get" asp-action="Index" asp-controller="Home" class="filter-bar" style="margin-top: var(--space-4);">
         <input type="text" name="q" value="@term" placeholder="Search equipment..." />
@@ -37,13 +41,13 @@
         {
             var (pillClass, pillLabel) = IconHelper.GetStatusPill(product);
             <div class="hcard">
-                <div class="hcard-media">
+                <a class="hcard-media" asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" style="text-decoration:none;">
                     <span class="pill @pillClass">@pillLabel</span>
                     @if (!string.IsNullOrWhiteSpace(product.ImagePath)) { <img src="@product.ImagePath" alt="@product.Name" style="width:100%;height:100%;object-fit:cover;" /> } else { @IconHelper.GetIcon(product.Name) }
-                </div>
+                </a>
                 <div class="hcard-body">
                     <div class="hcard-manufacturer">@product.Manufacturer</div>
-                    <div class="hcard-title">@product.Name</div>
+                    <a class="hcard-title" asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" style="color:inherit;text-decoration:none;">@product.Name</a>
                     <p class="hcard-desc">@product.Description</p>
                     <div class="hcard-bottom">
                         <span class="hcard-price">Rs. @product.Price.ToString("N0")</span>
@@ -56,36 +60,100 @@
 }
 else
 {
-    @foreach (var bt in businessTypes)
-    {
-        var products = byCategory.ContainsKey(bt.Id) ? byCategory[bt.Id] : new List<Product>();
-        <section class="category-section">
-            <div class="category-header">
-                <h2><span class="icon">@IconHelper.GetBusinessIcon(bt.Name)</span>@bt.Name</h2>
-                <a asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">View all &rarr;</a>
-            </div>
+    @* ---- One-tap category strip: every category, horizontally scrollable ---- *@
+    <div class="category-strip">
+        @foreach (var bt in businessTypes)
+        {
+            <a class="category-chip" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
+                <span>@IconHelper.GetBusinessIcon(bt)</span>@bt.Name
+            </a>
+        }
+    </div>
 
-            @if (!products.Any())
+    @* ---- Segment tabs (pure CSS, no JS) + a grid per segment ---- *@
+    <div class="segment-tabs">
+        <input type="radio" name="segment" id="seg-small" class="segment-tab-input" checked />
+        <input type="radio" name="segment" id="seg-big" class="segment-tab-input" />
+        <input type="radio" name="segment" id="seg-hobby" class="segment-tab-input" />
+
+        <div class="segment-tab-strip">
+            <label for="seg-small" class="segment-tab-label">Small Business</label>
+            <label for="seg-big" class="segment-tab-label">Big Business</label>
+            <label for="seg-hobby" class="segment-tab-label">Hobbyist</label>
+        </div>
+
+        <div class="segment-panel" data-panel="small">
+            <p class="text-muted">Solo or small-team operations — a shop, a stall, a home-based business.</p>
+            <div class="category-grid">
+                @foreach (var bt in smallBiz)
+                {
+                    <a class="category-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
+                        <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
+                        <span class="category-card-name">@bt.Name</span>
+                        <span class="category-card-desc">@bt.ShortDescription</span>
+                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="segment-panel" data-panel="big">
+            <p class="text-muted">A bigger operation with a team behind it — more volume, more equipment.</p>
+            <div class="category-grid">
+                @foreach (var bt in bigBiz)
+                {
+                    <a class="category-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
+                        <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
+                        <span class="category-card-name">@bt.Name</span>
+                        <span class="category-card-desc">@bt.ShortDescription</span>
+                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="segment-panel" data-panel="hobby">
+            <p class="text-muted">Not a business at all — just kitting out a hobby properly.</p>
+            <div class="category-grid">
+                @foreach (var bt in hobbyist)
+                {
+                    <a class="category-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id">
+                        <span class="category-card-icon">@IconHelper.GetBusinessIcon(bt)</span>
+                        <span class="category-card-name">@bt.Name</span>
+                        <span class="category-card-desc">@bt.ShortDescription</span>
+                        <span class="category-card-count">@bt.Products.Count(p => p.IsActive) item@(bt.Products.Count(p => p.IsActive) == 1 ? "" : "s")</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (teaserBundles.Any())
+    {
+        <div class="page-header" style="margin-top: var(--space-6);">
+            <span class="eyebrow">Popular</span>
+            <h2>Bundles worth a look</h2>
+        </div>
+
+        <div class="bundle-row">
+            @foreach (var bundle in teaserBundles)
             {
-                <p class="text-muted">No items listed yet.</p>
+                var bundleTotal = bundle.Items.Sum(i => (i.Product?.Price ?? 0) * i.Quantity);
+                <a class="bundle-row-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bundle.BusinessTypeId">
+                    <div class="bundle-row-media">
+                        @if (!string.IsNullOrWhiteSpace(bundle.ImagePath))
+                        {
+                            <img src="@bundle.ImagePath" alt="@bundle.Name" style="width:100%;height:100%;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            @IconHelper.GetBusinessIcon(bundle.BusinessType!)
+                        }
+                    </div>
+                    <div class="bundle-row-name">@bundle.Name</div>
+                    <div class="bundle-row-price">Rs. @bundleTotal.ToString("N0")</div>
+                </a>
             }
-            else
-            {
-                <div class="mini-grid">
-                    @foreach (var product in products)
-                    {
-                        <a class="mini-card" asp-controller="BusinessType" asp-action="Catalog" asp-route-id="@bt.Id" style="color:inherit;text-decoration:none;">
-                            <div class="mini-card-media">
-                                @if (!string.IsNullOrWhiteSpace(product.ImagePath)) { <img src="@product.ImagePath" alt="@product.Name" style="width:100%;height:100%;object-fit:cover;" /> } else { @IconHelper.GetIcon(product.Name) }
-                            </div>
-                            <div class="mini-card-body">
-                                <div class="mini-card-title">@product.Name</div>
-                                <div class="mini-card-price">Rs. @product.Price.ToString("N0")</div>
-                            </div>
-                        </a>
-                    }
-                </div>
-            }
-        </section>
+        </div>
     }
 }

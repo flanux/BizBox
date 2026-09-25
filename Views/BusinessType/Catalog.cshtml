@@ -8,7 +8,7 @@
 
 <div class="page-header">
     <span class="eyebrow">Starter Kit</span>
-    <h1>@IconHelper.GetBusinessIcon(Model.Name) @Model.Name</h1>
+    <h1>@IconHelper.GetBusinessIcon(Model) @Model.Name</h1>
     <p>@Model.ShortDescription New equipment and resale listings for this business type, together in one list.</p>
 </div>
 
@@ -43,7 +43,7 @@
                     }
                     else
                     {
-                        @IconHelper.GetBusinessIcon(Model.Name)
+                        @IconHelper.GetBusinessIcon(Model)
                     }
                 </div>
                 <div class="bundle-card-body">
@@ -99,7 +99,7 @@
 @if (!Model.Products.Any())
 {
     <div class="empty-state">
-        <span class="icon">@IconHelper.GetBusinessIcon(Model.Name)</span>
+        <span class="icon">@IconHelper.GetBusinessIcon(Model)</span>
         <p>No equipment listed for this business type yet.</p>
     </div>
 }
@@ -109,7 +109,7 @@ else
     {
         var (pillClass, pillLabel) = IconHelper.GetStatusPill(product);
         <div class="hcard">
-            <div class="hcard-media">
+            <a class="hcard-media" asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" style="text-decoration:none;">
                 <span class="pill @pillClass">@pillLabel</span>
                 @if (!string.IsNullOrWhiteSpace(product.ImagePath))
                 {
@@ -119,7 +119,7 @@ else
                 {
                     @IconHelper.GetIcon(product.Name)
                 }
-            </div>
+            </a>
             <div class="hcard-body">
                 <div class="hcard-top">
                     <div>
@@ -127,7 +127,7 @@ else
                         {
                             <div class="hcard-manufacturer">@product.Manufacturer</div>
                         }
-                        <div class="hcard-title">@product.Name</div>
+                        <a class="hcard-title" asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" style="color:inherit;text-decoration:none;">@product.Name</a>
                     </div>
                 </div>
                 <p class="hcard-desc">@product.Description</p>
