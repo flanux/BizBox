@@ -327,6 +327,7 @@ public static class DbSeeder
         foreach (var bt in businessTypes)
         {
             var products = db.Products
+                .AsEnumerable()
                 .Where(p => p.BusinessTypeId == bt.Id && p.SellerType == ListingSellerType.Platform && p.IsActive)
                 .OrderBy(p => p.Price)
                 .ToList();
