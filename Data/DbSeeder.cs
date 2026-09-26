@@ -362,6 +362,69 @@ public static class DbSeeder
         db.SaveChanges();
     }
 
+        // ================= Local product images =================
+    // Drop a file named after a product's slug into wwwroot/images/ (any of
+    // .jpg/.jpeg/.png/.webp) and this wires up Product.ImagePath for it
+    // automatically — no manual editing of this file, no separate script.
+    // Runs on every startup and only touches rows whose path actually
+    // changed, so it's safe (and cheap) to call repeatedly.
+    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+
+    public static void SyncLocalImages(ApplicationDbContext db, string webRootPath)
+    {
+        var imagesDir = Path.Combine(webRootPath, "images");
+        if (!Directory.Exists(imagesDir)) return;
+
+        var products = db.Products
+            .Where(p => p.SellerType == ListingSellerType.Platform)
+            .ToList();
+
+        var changed = false;
+        foreach (var product in products)
+        {
+            var slug = Slugify(product.Name);
+            foreach (var ext in ImageExtensions)
+            {
+                var candidate = Path.Combine(imagesDir, slug + ext);
+                if (File.Exists(candidate))
+                {
+                    var newPath = $"/images/{slug}{ext}";
+                    if (product.ImagePath != newPath)
+                    {
+                        product.ImagePath = newPath;
+                        changed = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (changed) db.SaveChanges();
+    }
+
+    // lower-case, any run of non-alphanumeric chars becomes one '-', trimmed
+    // at both ends. Matches the slugs listed in the product image manifest.
+    private static string Slugify(string name)
+    {
+        var lowered = name.ToLowerInvariant();
+        var sb = new System.Text.StringBuilder();
+        var lastWasDash = false;
+        foreach (var ch in lowered)
+        {
+            if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'))
+            {
+                sb.Append(ch);
+                lastWasDash = false;
+            }
+            else if (!lastWasDash)
+            {
+                sb.Append('-');
+                lastWasDash = true;
+            }
+        }
+        return sb.ToString().Trim('-');
+    }
+
     // Seeds an "Admin" role and one demo admin account, so there's an immediate
     // way to reach the admin panel without manually promoting a user via SQL.
     // Demo login: admin@bizbox.com / Admin@123

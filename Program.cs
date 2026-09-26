@@ -54,6 +54,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
     DbSeeder.Seed(db);
+    DbSeeder.SyncLocalImages(db, app.Environment.WebRootPath);
     await DbSeeder.SeedIdentityAsync(scope.ServiceProvider);
 }
 
